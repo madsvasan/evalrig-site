@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EvalRig - Benchmark AI Skills Across Frontier Models</title>
-    <meta name="description" content="Independent benchmark results for frontier LLMs on real-world software engineering skills. Claude, GPT, Gemini tested head-to-head.">
+    <title>EvalRig - Independent AI Benchmarks</title>
+    <meta name="description" content="Independent AI benchmarks. Models, skills, and tasks tested head-to-head with deterministic rules and ensemble LLM judges.">
     <style>
         :root {
             --bg: #0a0a0b;
@@ -352,6 +352,14 @@
             text-decoration: none;
         }
 
+        .view-all-link {
+            font-size: 14px;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .view-all-link:hover { text-decoration: underline; }
+
         footer a:hover { color: var(--text); }
 
         @media (max-width: 600px) {
@@ -418,6 +426,9 @@
         <div class="history-section">
             <h2>Benchmark Reports</h2>
             <div class="history-list" id="history-list"></div>
+            <div style="margin-top: 16px; text-align: center;">
+                <a href="https://turanu.ai/tag/benchmarks/" class="view-all-link">View all reports</a>
+            </div>
         </div>
 
         <div class="cta-section">
