@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvalRig - Benchmark AI Skills Across Frontier Models</title>
+    <meta name="description" content="Independent benchmark results for frontier LLMs on real-world software engineering skills. Claude, GPT, Gemini tested head-to-head.">
+    <style>
+        :root {
+            --bg: #0a0a0b;
+            --surface: #141416;
+            --border: #23232a;
+            --text: #e4e4e7;
+            --text-muted: #8b8b94;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        header {
+            padding: 48px 0 0;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-size: 40px;
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -0.5px;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: var(--text-muted);
+            max-width: 540px;
+            margin: 0 auto 40px;
+            line-height: 1.5;
+        }
+
+        .headline-stat {
+            display: inline-block;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 28px;
+            margin-bottom: 56px;
+            font-size: 15px;
+            color: var(--text-muted);
+        }
+
+        .headline-stat strong {
+            color: var(--accent);
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .results-section {
+            margin-bottom: 56px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        thead th:not(:first-child) { text-align: right; }
+
+        tbody td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tbody td:not(:first-child) {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .model-name { font-weight: 600; }
+        .rank-1 .model-name { color: var(--accent); }
+
+        .score-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .rank-1 .score-badge { background: rgba(99, 102, 241, 0.15); color: var(--accent); }
+        .rank-2 .score-badge { background: rgba(228, 228, 231, 0.08); color: var(--text); }
+        .rank-3 .score-badge { background: rgba(228, 228, 231, 0.08); color: var(--text-muted); }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 56px;
+        }
+
+        .skill-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .skill-card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .skill-card .skill-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .skill-scores {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .skill-score-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .skill-score-row .model { color: var(--text-muted); }
+        .skill-score-row .score { font-weight: 600; font-variant-numeric: tabular-nums; }
+        .skill-score-row.winner .model { color: var(--text); }
+        .skill-score-row.winner .score { color: var(--accent); }
+
+        .how-section {
+            margin-bottom: 56px;
+        }
+
+        .how-section h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .how-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .step {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .step-text {
+            font-size: 15px;
+            color: var(--text-muted);
+            padding-top: 3px;
+        }
+
+        .step-text strong { color: var(--text); }
+
+        .cta-section {
+            text-align: center;
+            padding: 48px 0;
+            margin-bottom: 40px;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .cta-section h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .cta-section p {
+            color: var(--text-muted);
+            font-size: 15px;
+            margin-bottom: 24px;
+        }
+
+        .signup-form {
+            display: flex;
+            gap: 10px;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        .signup-form input[type="email"] {
+            flex: 1;
+            padding: 12px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .signup-form input[type="email"]:focus { border-color: var(--accent); }
+        .signup-form input[type="email"]::placeholder { color: var(--text-muted); }
+
+        .signup-form button {
+            padding: 12px 24px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .signup-form button:hover { background: var(--accent-hover); }
+
+        .cta-link {
+            display: inline-block;
+            margin-top: 16px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .cta-link a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .cta-link a:hover { text-decoration: underline; }
+
+        /* History */
+        .history-section {
+            margin-bottom: 56px;
+        }
+
+        .history-section h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+
+        .history-item:hover { border-color: var(--accent); }
+
+        .history-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .history-label { font-weight: 600; font-size: 15px; }
+        .history-date { font-size: 13px; color: var(--text-muted); }
+        .history-winner {
+            font-size: 13px;
+            color: var(--accent);
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        footer {
+            padding: 32px 0 48px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        footer a:hover { color: var(--text); }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 28px; }
+            .subtitle { font-size: 16px; }
+            .skills-grid { grid-template-columns: 1fr; }
+            .signup-form { flex-direction: column; }
+            .signup-form button { width: 100%; }
+            header { padding: 32px 0 0; }
+            table { font-size: 14px; }
+            thead th, tbody td { padding: 10px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <div class="logo">EvalRig</div>
+        <h1>Frontier Models Tested on Real Skills</h1>
+        <p class="subtitle">Independent benchmarks of Claude, GPT, and Gemini on Anthropic's official agent skills. Same prompts, deterministic rules, ensemble LLM judges.</p>
+        <div class="headline-stat" id="headline"></div>
+    </div>
+</header>
+
+<main>
+    <div class="container">
+        <div class="results-section">
+            <div class="section-label" id="results-label"></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Score</th>
+                        <th>Cost</th>
+                        <th>Avg Tokens</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+        </div>
+
+        <div class="section-label">Skill Breakdown</div>
+        <div class="skills-grid" id="skills-grid"></div>
+
+        <div class="how-section">
+            <h2>How Scoring Works</h2>
+            <div class="how-steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-text"><strong>Generate.</strong> Each model gets the same prompt &mdash; skill instructions plus test input &mdash; and produces its complete output in one shot. Temperature 0.0.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-text"><strong>Rules (60%).</strong> Deterministic pattern matching checks whether the output contains required elements. Binary, reproducible, free to run.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-text"><strong>Ensemble Judge (40%).</strong> All three frontier models independently grade each output on relevance, completeness, and accuracy. Median score wins. No model grades its own homework unchecked.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <h2>Past Benchmarks</h2>
+            <div class="history-list" id="history-list"></div>
+        </div>
+
+        <div class="cta-section">
+            <h2>New benchmarks when new models ship</h2>
+            <p>Get the results in your inbox. No spam, just data.</p>
+            <form class="signup-form" action="#" method="POST">
+                <input type="email" name="email" placeholder="you@example.com" required>
+                <button type="submit">Subscribe</button>
+            </form>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <div class="container">
+        A product of <a href="https://turanu.ai">Turanu AI</a>
+    </div>
+</footer>
+
+<script>
+fetch('results.json')
+    .then(r => r.json())
+    .then(data => {
+        // Headline
+        const top = data.overall[0];
+        document.getElementById('headline').innerHTML =
+            `Latest: <strong>${top.model} scores ${top.score}</strong> on Anthropic's official skills &mdash; ${data.benchmark.label}`;
+
+        // Results label
+        document.getElementById('results-label').textContent =
+            `Overall Results \u2014 ${data.benchmark.label}`;
+
+        // Results table
+        const tbody = document.getElementById('results-body');
+        data.overall.forEach((m, i) => {
+            const rank = `rank-${i + 1}`;
+            const tr = document.createElement('tr');
+            tr.className = rank;
+            tr.innerHTML = `
+                <td class="model-name">${m.model}</td>
+                <td><span class="score-badge">${m.score}</span></td>
+                <td>$${m.cost.toFixed(2)}</td>
+                <td>${m.avg_tokens.toLocaleString()}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Skills grid
+        const grid = document.getElementById('skills-grid');
+        data.skills.forEach(skill => {
+            const entries = Object.entries(skill.scores).sort((a, b) => b[1] - a[1]);
+            const topScore = entries[0][1];
+            const isTie = entries.every(e => e[1] === topScore);
+
+            let scoresHtml;
+            if (isTie) {
+                scoresHtml = `
+                    <div class="skill-score-row winner"><span class="model">All three</span><span class="score">${topScore}</span></div>
+                    <div class="skill-score-row"><span class="model" style="font-style:italic">Dead heat</span><span class="score"></span></div>
+                `;
+            } else {
+                scoresHtml = entries.map((e, i) =>
+                    `<div class="skill-score-row${i === 0 ? ' winner' : ''}"><span class="model">${e[0]}</span><span class="score">${e[1]}</span></div>`
+                ).join('');
+            }
+
+            const card = document.createElement('div');
+            card.className = 'skill-card';
+            card.innerHTML = `
+                <h3>${skill.name}</h3>
+                <p class="skill-desc">${skill.description}</p>
+                <div class="skill-scores">${scoresHtml}</div>
+            `;
+            grid.appendChild(card);
+        });
+
+        // History
+        const historyList = document.getElementById('history-list');
+        data.history.forEach(h => {
+            const a = document.createElement('a');
+            a.className = 'history-item';
+            a.href = h.url;
+            a.innerHTML = `
+                <div class="history-meta">
+                    <span class="history-label">${h.label}</span>
+                    <span class="history-date">${h.date}</span>
+                </div>
+                <span class="history-winner">${h.winner} ${h.winner_score}</span>
+            `;
+            historyList.appendChild(a);
+        });
+    });
+</script>
+
+</body>
+</html>
