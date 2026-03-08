@@ -383,10 +383,11 @@
         <div class="cta-section">
             <h2>Stay ahead of the AI curve</h2>
             <p>New benchmarks, model insights, and AI engineering deep dives from Turanu AI.</p>
-            <form class="signup-form" action="#" method="POST">
+            <form class="signup-form" id="signup-form">
                 <input type="email" name="email" placeholder="you@example.com" required>
                 <button type="submit">Subscribe</button>
             </form>
+            <p id="signup-msg" style="display:none; margin-top:12px; font-size:14px;"></p>
         </div>
     </div>
 </main>
@@ -398,6 +399,43 @@
 </footer>
 
 <script>
+// Newsletter signup via Ghost members API
+document.getElementById('signup-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = this.email.value;
+    const btn = this.querySelector('button');
+    const msg = document.getElementById('signup-msg');
+    btn.disabled = true;
+    btn.textContent = 'Subscribing...';
+    msg.style.display = 'none';
+
+    fetch('https://turanu.ai/members/api/send-magic-link/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email: email, emailType: 'subscribe'})
+    })
+    .then(r => {
+        if (r.ok) {
+            msg.textContent = 'Check your inbox for a confirmation link.';
+            msg.style.color = '#6366f1';
+            this.email.value = '';
+        } else {
+            msg.textContent = 'Something went wrong. Try again.';
+            msg.style.color = '#ef4444';
+        }
+        msg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Subscribe';
+    })
+    .catch(() => {
+        msg.textContent = 'Something went wrong. Try again.';
+        msg.style.color = '#ef4444';
+        msg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Subscribe';
+    });
+});
+
 fetch('results.json')
     .then(r => r.json())
     .then(data => {
