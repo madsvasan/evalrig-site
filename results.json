@@ -1,30 +1,30 @@
 {
   "benchmark": {
-    "date": "2026-03-07",
-    "label": "March 7, 2026",
+    "date": "2026-03-08",
+    "label": "March 8, 2026",
     "skills_tested": 4,
     "models_tested": 3,
     "total_runs": 12,
-    "total_cost": 1.65
+    "total_cost": 1.82
   },
   "overall": [
     {
-      "model": "GPT-5.4",
-      "score": 0.876,
-      "cost": 0.34,
-      "avg_tokens": 3683
+      "model": "Claude Opus 4.6",
+      "score": 0.825,
+      "cost": 1.03,
+      "avg_tokens": 8955
     },
     {
-      "model": "Claude Opus 4.6",
-      "score": 0.794,
-      "cost": 1.06,
-      "avg_tokens": 9416
+      "model": "GPT-5.4",
+      "score": 0.814,
+      "cost": 0.48,
+      "avg_tokens": 6042
     },
     {
       "model": "Gemini 3.1 Pro",
-      "score": 0.792,
-      "cost": 0.24,
-      "avg_tokens": 2824
+      "score": 0.768,
+      "cost": 0.31,
+      "avg_tokens": 4009
     }
   ],
   "skills": [
@@ -33,9 +33,9 @@
       "name": "MCP Server Builder",
       "description": "TypeScript MCP server with Zod schemas, auth, pagination",
       "scores": {
-        "Claude Opus 4.6": 0.75,
-        "GPT-5.4": 0.88,
-        "Gemini 3.1 Pro": 0.71
+        "Claude Opus 4.6": 0.83,
+        "GPT-5.4": 0.79,
+        "Gemini 3.1 Pro": 0.67
       }
     },
     {
@@ -43,9 +43,9 @@
       "name": "Frontend Design",
       "description": "Responsive dashboard with animations, semantic HTML",
       "scores": {
-        "Claude Opus 4.6": 0.79,
-        "GPT-5.4": 0.79,
-        "Gemini 3.1 Pro": 0.79
+        "Claude Opus 4.6": 0.75,
+        "GPT-5.4": 0.75,
+        "Gemini 3.1 Pro": 0.75
       }
     },
     {
@@ -53,9 +53,9 @@
       "name": "Skill Creator",
       "description": "Write a SKILL.md with frontmatter, examples, edge cases",
       "scores": {
-        "Claude Opus 4.6": 0.84,
+        "Claude Opus 4.6": 0.88,
         "GPT-5.4": 0.92,
-        "Gemini 3.1 Pro": 0.96
+        "Gemini 3.1 Pro": 0.86
       }
     },
     {
@@ -63,16 +63,23 @@
       "name": "Excel Generator",
       "description": "3-year SaaS financial model with openpyxl and formulas",
       "scores": {
-        "Claude Opus 4.6": 0.79,
-        "GPT-5.4": 0.92,
-        "Gemini 3.1 Pro": 0.71
+        "Claude Opus 4.6": 0.83,
+        "GPT-5.4": 0.79,
+        "Gemini 3.1 Pro": 0.79
       }
     }
   ],
   "history": [
     {
+      "date": "2026-03-08",
+      "label": "Anthropic Official Skills (with test inputs)",
+      "url": "https://turanu.ai/anthropic-skills-benchmark",
+      "winner": "Claude Opus 4.6",
+      "winner_score": 0.825
+    },
+    {
       "date": "2026-03-07",
-      "label": "Anthropic Official Skills",
+      "label": "Anthropic Official Skills (initial)",
       "url": "https://turanu.ai/anthropic-skills-benchmark",
       "winner": "GPT-5.4",
       "winner_score": 0.876
