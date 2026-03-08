@@ -29,16 +29,6 @@
   ],
   "skills": [
     {
-      "id": "mcp-builder",
-      "name": "MCP Server Builder",
-      "description": "TypeScript MCP server with Zod schemas, auth, pagination",
-      "scores": {
-        "Claude Opus 4.6": 0.83,
-        "GPT-5.4": 0.79,
-        "Gemini 3.1 Pro": 0.67
-      }
-    },
-    {
       "id": "frontend-design",
       "name": "Frontend Design",
       "description": "Responsive dashboard with animations, semantic HTML",
@@ -49,12 +39,22 @@
       }
     },
     {
+      "id": "mcp-builder",
+      "name": "MCP Server Builder",
+      "description": "TypeScript MCP server with Zod schemas, auth, pagination",
+      "scores": {
+        "Claude Opus 4.6": 0.83,
+        "GPT-5.4": 0.79,
+        "Gemini 3.1 Pro": 0.67
+      }
+    },
+    {
       "id": "skill-creator",
       "name": "Skill Creator",
       "description": "Write a SKILL.md with frontmatter, examples, edge cases",
       "scores": {
-        "Claude Opus 4.6": 0.88,
         "GPT-5.4": 0.92,
+        "Claude Opus 4.6": 0.88,
         "Gemini 3.1 Pro": 0.86
       }
     },
@@ -72,17 +72,10 @@
   "history": [
     {
       "date": "2026-03-08",
-      "label": "Anthropic Official Skills (with test inputs)",
+      "label": "4 Anthropic Skills Benchmark",
       "url": "https://turanu.ai/anthropic-skills-benchmark",
       "winner": "Claude Opus 4.6",
       "winner_score": 0.825
-    },
-    {
-      "date": "2026-03-07",
-      "label": "Anthropic Official Skills (initial)",
-      "url": "https://turanu.ai/anthropic-skills-benchmark",
-      "winner": "GPT-5.4",
-      "winner_score": 0.876
     }
   ]
 }
