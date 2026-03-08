@@ -409,7 +409,7 @@ document.getElementById('signup-form').addEventListener('submit', function(e) {
     btn.textContent = 'Subscribing...';
     msg.style.display = 'none';
 
-    fetch('https://turanu.ai/members/api/send-magic-link/', {
+    fetch('https://still-flower-bda0.workers.dev/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({email: email, emailType: 'subscribe'})
