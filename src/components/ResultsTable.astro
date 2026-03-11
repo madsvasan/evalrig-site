@@ -1,0 +1,71 @@
+---
+interface ModelResult {
+  name: string;
+  avgScore: number;
+  passRate: string;
+  totalCost: string;
+  avgTokens: string;
+}
+
+interface Props {
+  results: ModelResult[];
+  threshold?: number;
+}
+
+const { results, threshold = 0.70 } = Astro.props;
+const bestScore = Math.max(...results.map(r => r.avgScore));
+const costs = results.map(r => parseFloat(r.totalCost.replace('$', '')));
+const cheapest = Math.min(...costs);
+---
+
+<div class="table-wrap">
+  <table class="results-table">
+    <thead>
+      <tr><th>Model</th><th>Avg Score</th><th>Pass Rate</th><th>Total Cost</th><th>Avg Tokens</th></tr>
+    </thead>
+    <tbody>
+      {results.map((r, i) => {
+        const isBestScore = r.avgScore === bestScore && results.filter(x => x.avgScore === bestScore).length === 1;
+        const isCheapest = costs[i] === cheapest && costs.filter(c => c === cheapest).length === 1;
+        return (
+          <tr class={isBestScore ? 'row-highlight' : ''}>
+            <td class="model-name">{r.name}</td>
+            <td class:list={['avg-cell', { best: isBestScore }]}>{r.avgScore.toFixed(3)}</td>
+            <td>{r.passRate}</td>
+            <td class:list={[{ best: isCheapest }]}>{r.totalCost}</td>
+            <td>{r.avgTokens}</td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .table-wrap {
+    margin: 1.25rem 0;
+    overflow-x: auto;
+  }
+
+  .model-name {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .avg-cell {
+    font-weight: 600;
+  }
+
+  .best {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .row-highlight {
+    background: rgba(99, 102, 241, 0.03);
+  }
+
+  .results-table td, .results-table th {
+    padding: 0.6rem 0.75rem;
+  }
+</style>

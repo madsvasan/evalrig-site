@@ -1,0 +1,72 @@
+---
+interface Props {
+  id: string;
+  title: string;
+}
+
+const { id, title } = Astro.props;
+---
+
+<section class="report-section">
+  <h2 id={id}>{title}</h2>
+  <slot />
+</section>
+
+<style>
+  .report-section {
+    margin-bottom: 3rem;
+  }
+
+  .report-section h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .report-section :global(h3) {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+
+  .report-section :global(p) {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .report-section :global(ul) {
+    list-style: none;
+    padding: 0;
+  }
+
+  .report-section :global(li) {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    padding: 0.5rem 0 0.5rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .report-section :global(li)::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-dim);
+  }
+
+  .report-section :global(li strong) {
+    color: var(--text);
+  }
+</style>

@@ -1,0 +1,70 @@
+---
+interface CostRow {
+  name: string;
+  cells: string[];
+}
+
+interface Props {
+  headers: string[];
+  rows: CostRow[];
+  highlightCheapest?: number; // column index (0-based from cells) to find cheapest
+}
+
+const { headers, rows, highlightCheapest } = Astro.props;
+
+// Find cheapest value in the specified column
+let cheapestValue: number | null = null;
+let cheapestCount = 0;
+if (highlightCheapest !== undefined) {
+  const values = rows.map(r => parseFloat(r.cells[highlightCheapest].replace(/[$,]/g, '')));
+  cheapestValue = Math.min(...values);
+  cheapestCount = values.filter(v => v === cheapestValue).length;
+}
+---
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        {headers.map(h => <th>{h}</th>)}
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map(row => {
+        const isCheapestRow = highlightCheapest !== undefined && cheapestValue !== null && cheapestCount === 1 &&
+          parseFloat(row.cells[highlightCheapest].replace(/[$,]/g, '')) === cheapestValue;
+        return (
+          <tr class={isCheapestRow ? 'row-highlight' : ''}>
+            <td class="model-name">{row.name}</td>
+            {row.cells.map((cell, i) => {
+              const isBest = highlightCheapest !== undefined && i === highlightCheapest && isCheapestRow;
+              return <td class:list={[{ best: isBest }]}>{cell}</td>;
+            })}
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .table-wrap {
+    margin: 1.25rem 0;
+    overflow-x: auto;
+  }
+
+  .model-name {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .best {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .row-highlight {
+    background: rgba(99, 102, 241, 0.03);
+  }
+</style>

@@ -1,0 +1,39 @@
+---
+import ScoreRow from './ScoreRow.astro';
+
+interface SkillScores {
+  skill: string;
+  scores: number[];
+}
+
+interface Props {
+  models: string[];
+  skills: SkillScores[];
+  threshold?: number;
+}
+
+const { models, skills, threshold = 0.70 } = Astro.props;
+---
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Skill</th>
+        {models.map(m => <th>{m}</th>)}
+      </tr>
+    </thead>
+    <tbody>
+      {skills.map(s => (
+        <ScoreRow label={s.skill} scores={s.scores} threshold={threshold} />
+      ))}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  .table-wrap {
+    margin: 1.25rem 0;
+    overflow-x: auto;
+  }
+</style>

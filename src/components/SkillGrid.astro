@@ -1,0 +1,58 @@
+---
+interface Skill {
+  name: string;
+  description: string;
+}
+
+interface Props {
+  skills: Skill[];
+}
+
+const { skills } = Astro.props;
+---
+
+<div class="skill-details">
+  {skills.map(s => (
+    <div class="skill-detail">
+      <h3>{s.name}</h3>
+      <p>{s.description}</p>
+    </div>
+  ))}
+</div>
+
+<style>
+  .skill-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.25rem 0;
+  }
+
+  .skill-detail {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+
+  .skill-detail h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+    color: var(--text);
+  }
+
+  .skill-detail p {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 640px) {
+    .skill-details {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

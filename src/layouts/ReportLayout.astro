@@ -1,0 +1,352 @@
+---
+import Base from './Base.astro';
+
+interface TocItem {
+  id: string;
+  label: string;
+}
+
+interface Props {
+  title: string;
+  subtitle: string;
+  description: string;
+  department: string;
+  date: string;
+  dateFormatted: string;
+  slug: string;
+  toc: TocItem[];
+  methodology: string;
+  turanuUrl?: string;
+  models?: string[];
+}
+
+const {
+  title, subtitle, description, department, date, dateFormatted, slug,
+  toc, methodology, turanuUrl, models = [],
+} = Astro.props;
+
+const pageUrl = `https://evalrig.ai/benchmarks/${slug}/`;
+
+const articleJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: `${title}: ${subtitle}`,
+  description,
+  datePublished: date,
+  author: {
+    "@type": "Person",
+    name: "Mads Srinivasan",
+    url: "https://www.linkedin.com/in/mitmads/",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "EvalRig",
+    url: "https://evalrig.ai",
+    logo: { "@type": "ImageObject", url: "https://evalrig.ai/logo.svg" },
+  },
+  url: pageUrl,
+  image: "https://evalrig.ai/og-image.png",
+  about: models.map(m => ({
+    "@type": "SoftwareApplication",
+    name: m,
+    applicationCategory: "AI Model",
+  })),
+};
+
+const shareText = encodeURIComponent(`${title}: ${subtitle} — independent benchmark results`);
+const shareUrl = encodeURIComponent(pageUrl);
+---
+
+<Base title={`${title}: ${subtitle}`} description={description} jsonLd={articleJsonLd}>
+  <article class="report">
+    <header class="report-header">
+      <a href="/benchmarks/" class="back-link">&larr; All Benchmarks</a>
+      <div class="report-meta">
+        <span class="dept-tag">{department}</span>
+        <time datetime={date}>{dateFormatted}</time>
+      </div>
+      <h1>{title}</h1>
+      <p class="report-subtitle">{subtitle}</p>
+      <slot name="intro" />
+    </header>
+
+    <nav class="toc">
+      <h2>Contents</h2>
+      <ol>
+        {toc.map(item => (
+          <li><a href={`#${item.id}`}>{item.label}</a></li>
+        ))}
+      </ol>
+    </nav>
+
+    <slot />
+
+    <div class="share-bar">
+      <span class="share-label">Share this report</span>
+      <div class="share-buttons">
+        <a
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`}
+          target="_blank"
+          rel="noopener"
+          class="share-btn share-linkedin"
+          aria-label="Share on LinkedIn"
+        >LinkedIn</a>
+        <a
+          href={`https://x.com/intent/tweet?url=${shareUrl}&text=${shareText}`}
+          target="_blank"
+          rel="noopener"
+          class="share-btn share-x"
+          aria-label="Share on X"
+        >X</a>
+        <button
+          class="share-btn share-copy"
+          data-url={pageUrl}
+          aria-label="Copy link"
+        >Copy Link</button>
+      </div>
+    </div>
+
+    <footer class="report-footer">
+      <div class="methodology">
+        <h3>Methodology</h3>
+        <p>{methodology}</p>
+      </div>
+      {turanuUrl && (
+        <div class="report-links">
+          <a href={turanuUrl} target="_blank" rel="noopener">Also published on Turanu AI &rarr;</a>
+        </div>
+      )}
+    </footer>
+  </article>
+</Base>
+
+<script>
+  document.querySelectorAll('.share-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const url = (btn as HTMLElement).dataset.url;
+      if (url) {
+        navigator.clipboard.writeText(url).then(() => {
+          btn.textContent = 'Copied!';
+          setTimeout(() => btn.textContent = 'Copy Link', 2000);
+        });
+      }
+    });
+  });
+</script>
+
+<style>
+  .report {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+
+  .report-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .back-link {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .back-link:hover {
+    color: var(--accent);
+  }
+
+  .report-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .dept-tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-subtle);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+  }
+
+  time {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .report-header h1 {
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+  }
+
+  .report-subtitle {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+  }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .toc h2 {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .toc ol {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.5rem;
+    counter-reset: toc;
+  }
+
+  .toc li {
+    counter-increment: toc;
+  }
+
+  .toc li::before {
+    content: counter(toc) ".";
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-right: 0.35rem;
+  }
+
+  .toc a {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .toc a:hover {
+    color: var(--accent);
+  }
+
+  .report-footer {
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+
+  .methodology h3 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .methodology p {
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+  }
+
+  .report-links {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .report-links a {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .share-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 0;
+    border-top: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+
+  .share-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .share-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .share-btn {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.4rem 0.9rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .share-btn:hover {
+    border-color: var(--border-hover);
+    color: var(--text);
+    background: var(--surface-hover);
+  }
+
+  .share-linkedin:hover {
+    border-color: #0a66c2;
+    color: #0a66c2;
+  }
+
+  .share-x:hover {
+    border-color: var(--text);
+    color: var(--text);
+  }
+
+  @media (max-width: 640px) {
+    .report-header h1 {
+      font-size: 1.6rem;
+    }
+
+    .toc ol {
+      flex-direction: column;
+    }
+
+    .share-bar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .share-buttons {
+      flex-wrap: wrap;
+    }
+  }
+</style>
