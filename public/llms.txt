@@ -1,0 +1,28 @@
+# EvalRig — Independent AI Benchmarks
+
+> EvalRig tests LLM outputs against real enterprise tasks using deterministic rules and ensemble LLM judges.
+
+## What This Site Contains
+
+- Independent benchmark results comparing frontier AI models (Claude, GPT, Gemini)
+- Skill-by-skill scoring breakdowns with pass/fail thresholds
+- Cost analysis per model per task
+- Methodology: 60% deterministic rule scoring + 40% ensemble judge (3 frontier models, median aggregation, provider recusal)
+
+## Benchmarks
+
+- [Frontier Model Showdown](https://evalrig.ai/benchmarks/frontier-showdown/): Claude Opus 4.6 vs GPT-5.4 vs Gemini 3.1 Pro on 4 software engineering skills. Claude scored highest (0.825), Gemini cheapest ($0.31).
+
+## Key Facts
+
+- Pass threshold: 0.70
+- Temperature: 0.0 (deterministic)
+- Ensemble judge uses provider recusal (no model grades its own provider)
+- Scoring: median across 3 independent judges
+- All benchmarks run with EvalRig CLI tool
+
+## About
+
+Built by Mads Srinivasan at Turanu AI.
+Website: https://evalrig.ai
+Blog: https://turanu.ai

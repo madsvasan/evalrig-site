@@ -1,9 +1,23 @@
 ---
 import Base from '../layouts/Base.astro';
 import StatBox from '../components/StatBox.astro';
+
+const orgJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "EvalRig",
+  url: "https://evalrig.ai",
+  logo: "https://evalrig.ai/logo.svg",
+  description: "Independent AI benchmarks. Models tested head-to-head with deterministic rules and ensemble LLM judges.",
+  parentOrganization: {
+    "@type": "Organization",
+    name: "Turanu AI",
+    url: "https://turanu.ai",
+  },
+};
 ---
 
-<Base>
+<Base jsonLd={orgJsonLd}>
   <section class="hero">
     <h1>Independent AI<br/>Benchmarks</h1>
     <p class="subtitle">

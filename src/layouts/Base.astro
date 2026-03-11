@@ -3,12 +3,14 @@ interface Props {
   title?: string;
   description?: string;
   ogImage?: string;
+  jsonLd?: Record<string, unknown>;
 }
 
 const {
   title,
   description = 'Independent AI benchmarks. Models tested head-to-head with deterministic rules and ensemble LLM judges.',
   ogImage = 'https://evalrig.ai/og-image.png',
+  jsonLd,
 } = Astro.props;
 
 const siteTitle = title ? `${title} — EvalRig` : 'EvalRig — Independent AI Benchmarks';
@@ -37,6 +39,8 @@ const currentPath = Astro.url.pathname;
     <meta name="twitter:title" content={siteTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
+
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
