@@ -1,0 +1,29 @@
+---
+import ScoreCell from './ScoreCell.astro';
+
+interface Props {
+  label: string;
+  scores: number[];
+  threshold?: number;
+}
+
+const { label, scores, threshold = 0.70 } = Astro.props;
+const max = Math.max(...scores);
+const winnerCount = scores.filter(s => s === max).length;
+const hasClearWinner = winnerCount === 1;
+---
+
+<tr>
+  <td class="row-label">{label}</td>
+  {scores.map(score => (
+    <ScoreCell score={score} best={hasClearWinner && score === max} threshold={threshold} />
+  ))}
+</tr>
+
+<style>
+  .row-label {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+</style>

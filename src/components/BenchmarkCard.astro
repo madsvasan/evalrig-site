@@ -1,0 +1,194 @@
+---
+interface Props {
+  slug: string;
+  title: string;
+  date: string;
+  department: string;
+  models: number;
+  skills: number;
+  runs: number;
+  bestValue: string;
+  bestValueScore: string;
+  bestOverall: string;
+  bestOverallScore: string;
+  headline: string;
+}
+
+const {
+  slug, title, date, department, models, skills, runs,
+  bestValue, bestValueScore, bestOverall, bestOverallScore, headline,
+} = Astro.props;
+---
+
+<a href={`/benchmarks/${slug}/`} class="benchmark-card">
+  <div class="card-header">
+    <span class="card-dept">{department}</span>
+    <time datetime={date}>{date}</time>
+  </div>
+  <h3 class="card-title">{title}</h3>
+  <p class="card-headline">{headline}</p>
+  <div class="card-stats">
+    <div class="stat">
+      <span class="stat-value">{models}</span>
+      <span class="stat-label">Models</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{skills}</span>
+      <span class="stat-label">Skills</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">{runs}</span>
+      <span class="stat-label">Runs</span>
+    </div>
+  </div>
+  <div class="card-picks">
+    <div class="pick">
+      <span class="pick-label">Best Value</span>
+      <span class="pick-model">{bestValue}</span>
+      <span class="pick-score">{bestValueScore}</span>
+    </div>
+    <div class="pick">
+      <span class="pick-label">Best Overall</span>
+      <span class="pick-model">{bestOverall}</span>
+      <span class="pick-score">{bestOverallScore}</span>
+    </div>
+  </div>
+  <span class="card-cta">Read full report &rarr;</span>
+</a>
+
+<style>
+  .benchmark-card {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    color: var(--text);
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  }
+
+  .benchmark-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.08);
+    color: var(--text);
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-dept {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-subtle);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+  }
+
+  time {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-headline {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-value {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .card-picks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .pick {
+    padding: 0.75rem;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+  }
+
+  .pick-label {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+  }
+
+  .pick-model {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .pick-score {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .card-cta {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  @media (max-width: 640px) {
+    .card-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

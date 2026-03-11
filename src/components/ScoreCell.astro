@@ -1,0 +1,49 @@
+---
+interface Props {
+  score: number;
+  best?: boolean;
+  threshold?: number;
+}
+
+const { score, best = false, threshold = 0.70 } = Astro.props;
+const pass = score >= threshold;
+const cls = [
+  'score-cell',
+  pass ? 'pass' : 'fail',
+  best ? 'best' : '',
+].filter(Boolean).join(' ');
+---
+
+<td class={cls}>{score.toFixed(2)}</td>
+
+<style>
+  .score-cell {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pass {
+    color: var(--green);
+  }
+
+  .fail {
+    color: var(--red);
+  }
+
+  .best {
+    font-weight: 700;
+    position: relative;
+  }
+
+  .best::after {
+    content: '';
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    bottom: -1px;
+    height: 2px;
+    background: currentColor;
+    opacity: 0.4;
+    border-radius: 1px;
+  }
+</style>

@@ -1,0 +1,46 @@
+---
+interface Props {
+  value: string;
+  label: string;
+  accent?: boolean;
+}
+
+const { value, label, accent = false } = Astro.props;
+---
+
+<div class:list={['stat-box', { accent }]}>
+  <span class="value">{value}</span>
+  <span class="label">{label}</span>
+</div>
+
+<style>
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    text-align: center;
+  }
+
+  .value {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .accent .value {
+    color: var(--accent);
+  }
+
+  .label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 0.35rem;
+  }
+</style>

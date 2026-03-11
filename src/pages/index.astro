@@ -1,0 +1,296 @@
+---
+import Base from '../layouts/Base.astro';
+import StatBox from '../components/StatBox.astro';
+---
+
+<Base>
+  <section class="hero">
+    <h1>Independent AI<br/>Benchmarks</h1>
+    <p class="subtitle">
+      Models, skills, and tasks tested head-to-head.
+      Deterministic rules. Ensemble judges. No vendor bias.
+    </p>
+    <div class="hero-stats">
+      <StatBox value="3" label="Models Tested" />
+      <StatBox value="4" label="Skills" />
+      <StatBox value="12" label="Total Runs" />
+    </div>
+  </section>
+
+  <section class="latest">
+    <div class="section-header">
+      <h2>Latest Finding</h2>
+    </div>
+    <div class="finding-card">
+      <span class="finding-tag">Frontier Model Evals</span>
+      <h3>Claude Opus 4.6 scores highest at 0.825</h3>
+      <p>
+        Three frontier models, four skills, ensemble judges. Claude Opus led at
+        0.825 but cost $1.03. GPT-5.4 scored 0.814 for $0.48. Gemini was cheapest
+        at $0.31 but the only model to miss a pass threshold. The gap between
+        first and third: 0.057 points.
+      </p>
+      <a href="/benchmarks/frontier-showdown/" class="finding-link">Read the full report &rarr;</a>
+    </div>
+  </section>
+
+  <section class="how-section">
+    <h2>How Scoring Works</h2>
+    <div class="how-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <strong>Generate.</strong> Each model gets the same prompt &mdash;
+          skill instructions plus test input &mdash; and produces its complete
+          output in one shot. Temperature 0.0.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <strong>Rules (60%).</strong> Deterministic pattern matching checks
+          whether the output contains required elements. Binary, reproducible,
+          free to run.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <strong>Ensemble Judge (40%).</strong> Three frontier models
+          independently grade each output on relevance, completeness, and
+          accuracy. Provider recusal prevents self-grading bias. Median score wins.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <h2>Stay ahead of the AI curve</h2>
+    <p>New benchmarks, model insights, and AI engineering deep dives.</p>
+    <div class="cta-buttons">
+      <a href="/benchmarks/" class="btn btn-primary">View All Benchmarks</a>
+      <a href="https://turanu.ai/#/portal/signup/free" class="btn btn-secondary" target="_blank" rel="noopener">Subscribe</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    text-align: center;
+    padding: 3rem 0 2rem;
+  }
+
+  .hero h1 {
+    font-size: 3.75rem;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+    margin-bottom: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 540px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 3rem;
+  }
+
+  .latest {
+    margin-bottom: 3.5rem;
+  }
+
+  .section-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .section-header h2 {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .finding-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    transition: border-color 0.2s;
+  }
+
+  .finding-card:hover {
+    border-color: var(--border-hover);
+  }
+
+  .finding-tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-subtle);
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+  }
+
+  .finding-card h3 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin-bottom: 0.75rem;
+  }
+
+  .finding-card p {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .finding-link {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .how-section {
+    margin-bottom: 3.5rem;
+  }
+
+  .how-section h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+
+  .how-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .step {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .step-text {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    padding-top: 4px;
+    line-height: 1.5;
+  }
+
+  .step-text strong {
+    color: var(--text);
+  }
+
+  .cta-section {
+    text-align: center;
+    padding: 3rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .cta-section h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .cta-section p {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.75rem 1.75rem;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-hover);
+    color: white;
+  }
+
+  .btn-secondary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--border-hover);
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+
+  @media (max-width: 640px) {
+    .hero h1 {
+      font-size: 2rem;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+    }
+
+    .hero-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cta-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .btn {
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>

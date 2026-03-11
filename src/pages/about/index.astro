@@ -1,0 +1,160 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="About">
+  <div class="about">
+    <h1>About EvalRig</h1>
+
+    <section class="about-section">
+      <p class="lede">
+        EvalRig is an independent AI benchmarking tool. It tests LLM outputs against real
+        enterprise tasks using deterministic rules and cross-validated ensemble judges.
+      </p>
+    </section>
+
+    <section class="about-section">
+      <h2>Why It Exists</h2>
+      <p>
+        Most AI benchmarks test general knowledge or reasoning puzzles. Enterprise teams
+        don't need models that solve math olympiad problems. They need models that triage
+        support tickets, draft compliant emails, and analyze churn data. EvalRig tests
+        those actual skills.
+      </p>
+      <p>
+        The goal: help teams pick the right model for the right task at the right price.
+        Not the most expensive model. Not the model with the best marketing. The one that
+        actually performs on their specific workflow.
+      </p>
+    </section>
+
+    <section class="about-section">
+      <h2>How It Works</h2>
+      <div class="how-grid">
+        <div class="how-item">
+          <h3>Skills</h3>
+          <p>
+            Each benchmark tests 4 real department workflows defined as skill.md files with
+            structured inputs, evaluation criteria, and expected output patterns.
+          </p>
+        </div>
+        <div class="how-item">
+          <h3>Models</h3>
+          <p>
+            9 models tested per benchmark: 3 tiers (Flagship, Mid, Light) across 3 providers
+            (Anthropic, OpenAI, Google). Same prompt, same input, temperature 0.0.
+          </p>
+        </div>
+        <div class="how-item">
+          <h3>Rules (60%)</h3>
+          <p>
+            Deterministic pattern matching validates required output elements. Binary checks,
+            fully reproducible, free to run. No subjective interpretation.
+          </p>
+        </div>
+        <div class="how-item">
+          <h3>Ensemble Judge (40%)</h3>
+          <p>
+            Three frontier models independently score each output. Provider recusal ensures no
+            model judges its own provider's outputs. Median score wins.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="about-section">
+      <h2>Benchmark Series</h2>
+      <p>
+        The enterprise department series tests AI models on real workflows mapped to the
+        Menlo VC AI market map. Each post covers one department with 4 skills, 9 models,
+        and a recommendation matrix showing the cheapest model that matches flagship quality.
+        See the full roadmap on the <a href="/benchmarks/">Benchmarks</a> page.
+      </p>
+    </section>
+
+    <section class="about-section built-by">
+      <p>Benchmarks engineered by <a href="https://www.linkedin.com/in/mitmads/" target="_blank" rel="noopener">Mads Srinivasan</a> at <a href="https://turanu.ai" target="_blank" rel="noopener">Turanu AI</a>.</p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .about {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .about h1 {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+  }
+
+  .about-section {
+    margin-bottom: 2.5rem;
+  }
+
+  .about-section h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+  }
+
+  .lede {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .about-section p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .how-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .how-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+
+  .how-item h3 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+
+  .how-item p {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    margin-bottom: 0;
+  }
+
+  .built-by {
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .built-by p {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+
+  @media (max-width: 640px) {
+    .how-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
