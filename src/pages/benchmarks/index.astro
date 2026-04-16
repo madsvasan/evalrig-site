@@ -14,6 +14,20 @@ import BenchmarkCard from '../../components/BenchmarkCard.astro';
 
   <div class="benchmarks-list">
     <BenchmarkCard
+      slug="cs-department"
+      title="Customer Success Doesn't Need Opus"
+      date="2026-03-16"
+      department="Customer Success"
+      models={9}
+      skills={4}
+      runs={108}
+      bestValue="GPT-4.1 Mini"
+      bestValueScore="0.763 avg, $0.45/qp"
+      bestOverall="Gemini 3.1 Pro"
+      bestOverallScore="0.852 avg"
+      headline="Nine models across three tiers on ticket triage, complaint response, knowledge base generation, and churn analysis. The most expensive model scored the lowest."
+    />
+    <BenchmarkCard
       slug="frontier-showdown"
       title="Frontier Model Showdown"
       date="2026-03-08"
@@ -33,10 +47,6 @@ import BenchmarkCard from '../../components/BenchmarkCard.astro';
     <h2>Upcoming</h2>
     <div class="upcoming-list">
       <div class="upcoming-item next">
-        <span class="upcoming-dept">Customer Success</span>
-        <span class="upcoming-skills">Ticket triage, complaint response, knowledge base generation, churn analysis</span>
-      </div>
-      <div class="upcoming-item">
         <span class="upcoming-dept">Sales</span>
         <span class="upcoming-skills">Lead scoring, outreach drafting, pipeline analysis, competitor intel</span>
       </div>

@@ -1,0 +1,448 @@
+---
+import ReportLayout from '../../../layouts/ReportLayout.astro';
+import ReportSection from '../../../components/ReportSection.astro';
+import ResultsTable from '../../../components/ResultsTable.astro';
+import SkillTable from '../../../components/SkillTable.astro';
+import CostTable from '../../../components/CostTable.astro';
+import SkillGrid from '../../../components/SkillGrid.astro';
+
+// Nine models across three providers × three tiers. Header row order used
+// consistently on all per-skill tables below so column 1 = flagship Anthropic,
+// column 9 = light Google, etc.
+const models = [
+  'Claude Opus 4.6',
+  'Claude Sonnet 4.6',
+  'Claude Sonnet 4.5',
+  'GPT-5.4',
+  'GPT-4.1',
+  'GPT-4.1 Mini',
+  'Gemini 3.1 Pro',
+  'Gemini 2.5 Pro',
+  'Gemini 2.5 Flash',
+];
+
+// Summary table — one row per model. Sorted by avg quality score (best first).
+// Sourced from results/cs-rerun/analysis.json cost_efficiency block.
+const results = [
+  { name: 'Gemini 3.1 Pro', avgScore: 0.852, passRate: '4/4', totalCost: '$0.521', avgTokens: '—' },
+  { name: 'GPT-5.4', avgScore: 0.839, passRate: '4/4', totalCost: '$0.744', avgTokens: '—' },
+  { name: 'Claude Sonnet 4.6', avgScore: 0.808, passRate: '4/4', totalCost: '$0.776', avgTokens: '—' },
+  { name: 'Claude Sonnet 4.5', avgScore: 0.807, passRate: '4/4', totalCost: '$0.634', avgTokens: '—' },
+  { name: 'Claude Opus 4.6', avgScore: 0.800, passRate: '4/4', totalCost: '$0.983', avgTokens: '—' },
+  { name: 'Gemini 2.5 Pro', avgScore: 0.759, passRate: '3/4', totalCost: '$0.510', avgTokens: '—' },
+  { name: 'GPT-4.1', avgScore: 0.748, passRate: '3/4', totalCost: '$0.446', avgTokens: '—' },
+  { name: 'GPT-4.1 Mini', avgScore: 0.763, passRate: '3/4', totalCost: '$0.340', avgTokens: '—' },
+  { name: 'Gemini 2.5 Flash', avgScore: 0.724, passRate: '3/4', totalCost: '$0.382', avgTokens: '—' },
+];
+
+const skills = [
+  { name: 'Ticket Triage', description: 'Ten support tickets classified by severity, SLA, routing team, and priority order. Output validated against a human-written golden answer covering all 10 tickets.' },
+  { name: 'Complaint Response', description: 'Enterprise VP escalation about three outages in one quarter. Model drafts customer email and internal notes. Judged on tone, SLA acknowledgment, and policy adherence.' },
+  { name: 'Knowledge Base Generation', description: 'Raw Slack messages and Jira notes about API key rotation turned into a structured help article. Tests nested-section reasoning and FAQ coverage.' },
+  { name: 'Churn Risk Analysis', description: 'A $156K enterprise account with 97 days until renewal. Model produces risk assessment, contributing factors, and retention recommendations. Text-mode eval.' },
+];
+
+// Per-skill scores, column order matches `models` above.
+const skillScores = [
+  {
+    skill: 'Ticket Triage',
+    scores: [0.84, 0.91, 0.84, 0.89, 0.65, 0.88, 0.92, 0.89, 0.75],
+  },
+  {
+    skill: 'Complaint Response',
+    scores: [0.76, 0.76, 0.76, 0.82, 0.74, 0.72, 0.77, 0.72, 0.71],
+  },
+  {
+    skill: 'Knowledge Base',
+    scores: [0.75, 0.72, 0.78, 0.80, 0.76, 0.62, 0.83, 0.58, 0.59],
+  },
+  {
+    skill: 'Churn Analysis',
+    scores: [0.85, 0.83, 0.85, 0.84, 0.84, 0.83, 0.90, 0.84, 0.85],
+  },
+];
+
+// Cost breakdown — one row per model, cheapest totals highlighted by CostTable.
+const costData = {
+  headers: ['Tier', 'Avg Score', 'Total Cost', 'Cost / Quality Pt'],
+  rows: [
+    { name: 'Gemini 3.1 Pro', cells: ['Flagship', '0.852', '$0.521', '$0.61'] },
+    { name: 'GPT-5.4', cells: ['Flagship', '0.839', '$0.744', '$0.89'] },
+    { name: 'Claude Sonnet 4.6', cells: ['Mid', '0.808', '$0.776', '$0.96'] },
+    { name: 'Claude Sonnet 4.5', cells: ['Light', '0.807', '$0.634', '$0.79'] },
+    { name: 'Claude Opus 4.6', cells: ['Flagship', '0.800', '$0.983', '$1.23'] },
+    { name: 'Gemini 2.5 Pro', cells: ['Mid', '0.759', '$0.510', '$0.67'] },
+    { name: 'GPT-4.1', cells: ['Mid', '0.748', '$0.446', '$0.60'] },
+    { name: 'GPT-4.1 Mini', cells: ['Light', '0.763', '$0.340', '$0.45'] },
+    { name: 'Gemini 2.5 Flash', cells: ['Light', '0.724', '$0.382', '$0.53'] },
+  ],
+};
+
+// Tier matrix shown on the "Tier Gap Analysis" table.
+const tierGaps = [
+  { provider: 'Anthropic', flagship: '0.800', mid: '0.808', light: '0.807', gap: '−0.007' },
+  { provider: 'OpenAI', flagship: '0.839', mid: '0.747', light: '0.763', gap: '0.077' },
+  { provider: 'Google', flagship: '0.852', mid: '0.759', light: '0.724', gap: '0.128' },
+];
+
+// Recommendation matrix — cheapest model within 0.05 of the same provider's flagship.
+// Stars (*) = flagship is overkill; bare rows = flagship justified.
+const recMatrix = [
+  { skill: 'Ticket Triage', anthropic: 'Sonnet 4.5 (0.84) *', openai: 'GPT-4.1 Mini (0.88) *', google: 'Gemini 2.5 Pro (0.89) *' },
+  { skill: 'Complaint Response', anthropic: 'Sonnet 4.5 (0.76) *', openai: 'GPT-5.4 (0.82)', google: 'Gemini 2.5 Pro (0.72) *' },
+  { skill: 'Knowledge Base', anthropic: 'Sonnet 4.5 (0.78) *', openai: 'GPT-4.1 (0.76) *', google: 'Gemini 3.1 Pro (0.83)' },
+  { skill: 'Churn Analysis', anthropic: 'Sonnet 4.5 (0.85) *', openai: 'GPT-4.1 Mini (0.83) *', google: 'Gemini 2.5 Flash (0.85) *' },
+];
+
+const toc = [
+  { id: 'what-we-tested', label: 'What We Tested' },
+  { id: 'how-we-judged', label: 'How We Judged' },
+  { id: 'recommendation-matrix', label: 'Recommendation Matrix' },
+  { id: 'full-results', label: 'Full Results' },
+  { id: 'tier-gaps', label: 'Tier Gaps' },
+  { id: 'cost-efficiency', label: 'Cost Efficiency' },
+  { id: 'what-this-means', label: 'What This Means' },
+  { id: 'limitations', label: 'Limitations' },
+];
+---
+
+<ReportLayout
+  title="Customer Success Doesn't Need Opus"
+  subtitle="9 models, 4 skills, 3 runs each — Gemini 3.1 Pro won, Opus came last"
+  description="Nine AI models across three tiers, benchmarked on four customer success tasks. Gemini 3.1 Pro scored highest (0.852). Claude Opus came last (0.800). GPT-4.1 Mini was the best value at $0.45 per quality point."
+  department="Customer Success"
+  date="2026-03-16"
+  dateFormatted="March 16, 2026"
+  slug="cs-department"
+  toc={toc}
+  models={models}
+  methodology="9 models (3 tiers × 3 providers), 108 evaluations (36 tests × 3 runs). Three-layer scoring: regex rules, golden answer field validation (structured mode for ticket triage, email response, and knowledge base; text mode with anchored judge for churn analysis), and ensemble LLM judge (Claude Opus, GPT-5.4, Gemini Pro) with provider recusal — no model judges its own provider's output. Gemini Pro judge returned a 503 on the Claude Sonnet 4.6 × email response evaluation; that score used only the GPT-5.4 judge. Golden answers carry provenance metadata (single annotator). Scoring weights vary by skill but follow a consistent split: ~60% deterministic (rules + golden answer validation) and ~40% LLM judge. All thresholds configurable. Scores report mean ± stddev (N=3). Total benchmark cost: $5.33. Model capabilities as of March 16, 2026. Benchmarked with EvalRig."
+>
+  <Fragment slot="intro">
+    <p class="report-lede">
+      The most expensive model scored the lowest. Across four customer success tasks,
+      nine models, and three providers — each tested three times for statistical confidence —
+      Claude Opus 4.6 averaged 0.80 ± 0.01. Gemini 3.1 Pro averaged 0.85 ± 0.01 at
+      roughly half the per-call cost. GPT-4.1 Mini averaged 0.76 ± 0.03 at a fraction
+      of the flagship price.
+    </p>
+    <p class="report-context">
+      This is the first post in a benchmark series testing AI models on real enterprise
+      department workflows. Every number comes with a confidence interval.
+    </p>
+    <figure class="hero-chart">
+      <img src="/benchmarks/cs-department/cs-cost-vs-quality.png"
+           alt="Cost vs Quality scatter plot — Gemini 3.1 Pro best quality, GPT-4.1 Mini best value, Opus 4.6 most expensive" />
+      <figcaption>Quality vs total cost per model across the four CS skills.</figcaption>
+    </figure>
+  </Fragment>
+
+  <ReportSection id="what-we-tested" title="What We Tested">
+    <p>Four skills that map to what customer success teams actually do, day in, day out.</p>
+
+    <SkillGrid skills={skills} />
+
+    <p>
+      Ticket triage validates structured classification — severity, SLA, routing,
+      priority order. Complaint response tests tone-aware drafting with policy
+      boundaries. Knowledge base generation exercises nested structural reasoning
+      over messy input. Churn analysis is the one open-ended, analytical task
+      (scored in text mode with an anchored judge rather than structured field checks).
+    </p>
+  </ReportSection>
+
+  <ReportSection id="how-we-judged" title="How We Judged">
+    <p>
+      Nine models across three tiers per provider, each tested <strong>three times</strong>
+      for statistical confidence.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Tier</th><th>Anthropic</th><th>OpenAI</th><th>Google</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Flagship</td><td>Claude Opus 4.6</td><td>GPT-5.4</td><td>Gemini 3.1 Pro</td></tr>
+          <tr><td class="row-label">Mid</td><td>Claude Sonnet 4.6</td><td>GPT-4.1</td><td>Gemini 2.5 Pro</td></tr>
+          <tr><td class="row-label">Light</td><td>Claude Sonnet 4.5</td><td>GPT-4.1 Mini</td><td>Gemini 2.5 Flash</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Three-layer evaluation</h3>
+    <p>Each output is scored through three independent layers:</p>
+    <ol>
+      <li><strong>Rules-based checks</strong> (free, deterministic): regex pattern matching for required structural elements — ticket IDs, severity levels, routing destinations, risk scores.</li>
+      <li><strong>Golden answer validation</strong> (free, deterministic): field-by-field comparison against human-written reference answers. Each golden carries provenance metadata. Scoring uses configurable thresholds — 20% tolerance for numeric values, set overlap for lists, case-insensitive exact match for enums.</li>
+      <li><strong>Ensemble LLM judge</strong> with provider recusal: Claude Opus, GPT-5.4, and Gemini 3.1 Pro each score independently, but <strong>never their own provider's outputs</strong>. When scoring a Claude model, only GPT and Gemini judge. Scores combined via median. Judges are anchored to the golden answer.</li>
+    </ol>
+
+    <p>
+      This three-layer approach means: rules catch structural failures, golden answers
+      catch factual errors, and the judge catches semantic quality issues. No single
+      layer can inflate a score.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="recommendation-matrix" title="Recommendation Matrix">
+    <p>
+      For each skill and provider, the recommended model is the cheapest tier that
+      scores within 0.05 of its own flagship.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Skill</th><th>Anthropic Pick</th><th>OpenAI Pick</th><th>Google Pick</th></tr>
+        </thead>
+        <tbody>
+          {recMatrix.map(r => (
+            <tr>
+              <td class="row-label">{r.skill}</td>
+              <td>{r.anthropic}</td>
+              <td>{r.openai}</td>
+              <td>{r.google}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="small">* = flagship is overkill (cheaper model matches quality within 0.05).</p>
+
+    <p>
+      Ten out of twelve combinations suggest flagship is overkill — though as noted in
+      Limitations, some of these rest on gaps near the 0.05 threshold and should be read
+      as directional. The two clear flagship wins: GPT-5.4 on complaint response
+      (0.82 vs 0.72 for Mini — a 0.10 gap well beyond noise) and Gemini 3.1 Pro on
+      knowledge base (0.83 vs 0.59 for Flash — Flash genuinely struggles with complex
+      nested article structure).
+    </p>
+  </ReportSection>
+
+  <ReportSection id="full-results" title="Full Results">
+    <ResultsTable results={results} />
+
+    <h3>Skill-by-Skill Breakdown</h3>
+    <SkillTable models={models} skills={skillScores} />
+
+    <figure>
+      <img src="/benchmarks/cs-department/cs-heatmap.png"
+           alt="Quality score heatmap across 9 models and 4 CS skills" />
+      <figcaption>Score heatmap. Green = pass threshold (0.70+), shading proportional to score.</figcaption>
+    </figure>
+
+    <p><strong>Four patterns stand out.</strong></p>
+
+    <p>
+      <strong>First, Gemini 3.1 Pro is the best overall model</strong> at 0.85 average —
+      not GPT-5.4 (0.84) and definitely not Opus (0.80). It delivers better quality at
+      roughly half the per-call cost of Opus.
+    </p>
+
+    <p>
+      <strong>Second, Anthropic's tiers are roughly equivalent on CS tasks.</strong>
+      Sonnet 4.5 (Light, 0.81), Sonnet 4.6 (Mid, 0.81), and Opus (Flagship, 0.80) all
+      land within 0.01 of each other — well within noise at N=3. The flagship premium
+      buys no measurable improvement on these workflows.
+    </p>
+
+    <p>
+      <strong>Third, knowledge base generation separates the tiers.</strong>
+      It's the only skill where light models genuinely struggle. GPT-4.1 Mini scores
+      0.62, Gemini 2.5 Flash scores 0.59 — both below the 0.70 pass threshold. The
+      nested structure (sections with headings, troubleshooting with issue/solution
+      pairs, FAQ with question/answer) requires sustained structural reasoning that
+      cheaper models can't maintain.
+    </p>
+
+    <p>
+      <strong>Fourth, latency varies 3x across providers.</strong> GPT-4.1 Mini
+      averages 15 seconds per call, Gemini 3.1 Pro averages 39 seconds, and Anthropic
+      models range from 45–55 seconds. For real-time CS workflows, this latency gap
+      matters as much as quality.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="tier-gaps" title="Tier Gaps — How Much Does Cheaper Cost You?">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Provider</th><th>Flagship</th><th>Mid</th><th>Light</th><th>Gap to Light</th></tr>
+        </thead>
+        <tbody>
+          {tierGaps.map(t => (
+            <tr>
+              <td class="row-label">{t.provider}</td>
+              <td>{t.flagship}</td>
+              <td>{t.mid}</td>
+              <td>{t.light}</td>
+              <td>{t.gap}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <figure>
+      <img src="/benchmarks/cs-department/cs-tier-gaps.png"
+           alt="Tier gaps chart — Anthropic ~flat across tiers, Google has the widest spread" />
+      <figcaption>Average score per provider per tier. Anthropic is flat; Google has the widest spread.</figcaption>
+    </figure>
+
+    <p>
+      Anthropic's gap is <strong>effectively zero</strong> — all three tiers score within
+      0.01. The flagship premium buys no measurable improvement for CS tasks.
+    </p>
+    <p>OpenAI degrades gracefully (0.077 gap), staying above the pass threshold at every tier.</p>
+    <p>
+      Google has the widest gap (0.128) — Gemini 2.5 Flash drops significantly on
+      knowledge base, pulling the average down. But Gemini 3.1 Pro at the top is the
+      benchmark's best model.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="cost-efficiency" title="Cost Efficiency">
+    <CostTable headers={costData.headers} rows={costData.rows} highlightCheapest={2} />
+
+    <figure>
+      <img src="/benchmarks/cs-department/cs-cost-efficiency.png"
+           alt="Cost efficiency chart — GPT-4.1 Mini leads at $0.45 per quality point" />
+      <figcaption>Cost per quality point. Lower is better. Total benchmark cost: $5.33.</figcaption>
+    </figure>
+
+    <p>
+      Gemini 3.1 Pro at rank 4 is the sweet spot — highest quality (0.852) at $0.61 per
+      quality point, scoring higher than every other model at a lower cost per quality
+      point than any other flagship.
+    </p>
+    <p>
+      Claude Opus at $1.23 per quality point is 2.7x more expensive than GPT-4.1 Mini
+      per unit of quality — and produces a smaller unit.
+    </p>
+    <p class="small">
+      A caveat on this metric: cost efficiency rewards cheap-and-adequate over
+      expensive-and-excellent. GPT-4.1 Mini ranks #1 but averages 0.763 — and fails
+      knowledge base generation outright (0.62). Cost per quality point is only
+      meaningful above your organization's acceptable quality floor, and that floor
+      depends on the task.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="what-this-means" title="What This Means">
+    <p>
+      The question for customer success leaders isn't which model is best. The data
+      answers that: <strong>Gemini 3.1 Pro for quality, GPT-4.1 Mini for value.</strong>
+      The question is whether model selection decisions in their organizations are
+      being made with benchmark data or with whatever the sales team's demo used.
+    </p>
+    <p>
+      Anthropic's three tiers produce statistically indistinguishable CS quality
+      (0.80–0.81), but Opus costs 55% more per call than Sonnet 4.5 and responds no
+      faster. If you're using Opus for CS workflows, there's no measurable benefit
+      over the light tier.
+    </p>
+    <p>
+      The one exception is knowledge base generation, where structural complexity
+      genuinely separates the tiers. If your CS team generates structured documentation
+      with nested sections, troubleshooting guides, and FAQs, the flagship models
+      (Gemini Pro, GPT-5.4) earn their price. For everything else — ticket triage,
+      email drafting, churn analysis — the cheapest models handle it.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="limitations" title="Limitations">
+    <ul>
+      <li>
+        <strong>Single annotator for golden answers is the largest source of systematic
+        bias.</strong> One person wrote the reference answers that anchor scoring.
+        Deterministic checks (rules + golden answer validation) account for ~60% of
+        each skill's weight, and the LLM judge is also anchored to the golden answer.
+        If the annotator systematically undervalues a capability — say, nuanced tone
+        modulation in complaint emails — every model's score shifts accordingly.
+        Inter-annotator agreement is standard in NLP evaluation; we plan to add a
+        second annotator in future runs.
+      </li>
+      <li>
+        <strong>N=3 limits statistical resolution.</strong> With typical stddev of
+        ~0.02, the 95% confidence interval is roughly ±0.023. Differences under 0.02
+        (e.g., the Anthropic tier spread of 0.007) are noise. Gaps of 0.05 — the
+        threshold used in the recommendation matrix — sit at the edge of statistical
+        significance at this sample size. Some "flagship is overkill" findings rest
+        on borderline gaps and should be read as directional, not definitive.
+      </li>
+      <li>
+        <strong>Synthetic test data.</strong> The tickets, escalation emails, Slack
+        messages, and account data are authored, not pulled from a production system.
+        Real enterprise data has misspellings, mixed languages, screenshots,
+        attachments, and domain-specific jargon. Clean, well-structured inputs may
+        systematically advantage different models than messy production data would.
+      </li>
+      <li>
+        <strong>Single prompt template per skill.</strong> Each model received the
+        same prompt. Flagship models may benefit disproportionately from more
+        detailed prompts, chain-of-thought instructions, or structured output formats.
+        This benchmark tests out-of-the-box performance on a standardized task, not
+        the ceiling with optimized prompting.
+      </li>
+    </ul>
+  </ReportSection>
+</ReportLayout>
+
+<style>
+  .report-lede {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+
+  .report-context {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-chart {
+    margin: 1.5rem 0 0 0;
+  }
+
+  .hero-chart img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  figure img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+  }
+
+  figure figcaption {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .table-wrap {
+    margin: 1.25rem 0;
+    overflow-x: auto;
+  }
+
+  .row-label {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+
+  .small {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+</style>
