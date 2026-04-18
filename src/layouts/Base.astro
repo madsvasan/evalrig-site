@@ -8,12 +8,12 @@ interface Props {
 
 const {
   title,
-  description = 'Independent AI benchmarks. Models tested head-to-head with deterministic rules and ensemble LLM judges.',
+  description = 'The independent eval harness for skill-by-skill model evaluation. Real repos, real tools, deterministic rules, ensemble judges with recusal.',
   ogImage = 'https://evalrig.ai/og-image.png',
   jsonLd,
 } = Astro.props;
 
-const siteTitle = title ? `${title} — EvalRig` : 'EvalRig — Independent AI Benchmarks';
+const siteTitle = title ? `${title} — EvalRig` : 'EvalRig — The Independent Eval Harness';
 const currentPath = Astro.url.pathname;
 ---
 
