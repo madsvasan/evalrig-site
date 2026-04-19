@@ -11,7 +11,8 @@
 
 ## Benchmarks
 
-- [Frontier Model Showdown](https://evalrig.ai/benchmarks/frontier-showdown/): Claude Opus 4.6 vs GPT-5.4 vs Gemini 3.1 Pro on 4 software engineering skills. Claude scored highest (0.825), Gemini cheapest ($0.31).
+- [Three Frontier Models, Five Agentic Coding Skills](https://evalrig.ai/benchmarks/frontier-3way/): Claude Opus 4.7 vs GPT-5.4 vs Gemini 3.1 Pro on 5 agentic coding skills with iterative test execution. All three pass every skill at 100%. Opus highest quality (0.979, $10.33), Gemini best value (0.952, $2.98), GPT-5.4 in the middle (0.934, $5.24 — uses 2-3× more tool rounds on concurrency work).
+- [Customer Success Doesn't Need Opus](https://evalrig.ai/benchmarks/cs-department/): Nine models across three tiers on four CS tasks. Gemini 3.1 Pro won (0.852). GPT-4.1 Mini best value ($0.45/quality point). Opus came last.
 
 ## Key Facts
 

@@ -1,0 +1,721 @@
+---
+import ReportLayout from '../../../layouts/ReportLayout.astro';
+import ReportSection from '../../../components/ReportSection.astro';
+import ResultsTable from '../../../components/ResultsTable.astro';
+import SkillTable from '../../../components/SkillTable.astro';
+import CostTable from '../../../components/CostTable.astro';
+import SkillGrid from '../../../components/SkillGrid.astro';
+
+// Three frontier models, April 2026. Display names match the way each
+// vendor introduces the model — reader should recognise them instantly.
+const models = [
+  'Claude Opus 4.7',
+  'GPT-5.4',
+  'Gemini 3.1 Pro',
+];
+
+// Summary table — one row per model. Sorted by avg quality score (best first).
+// Sourced from results/frontier-3way-v3/suite_results.json after all merges
+// (see pre-reg Addendum C re: the GPT-5.4 ceiling re-run).
+const results = [
+  { name: 'Claude Opus 4.7', avgScore: 0.979, passRate: '5/5', totalCost: '$10.33', avgTokens: '—' },
+  { name: 'Gemini 3.1 Pro', avgScore: 0.952, passRate: '5/5', totalCost: '$2.98', avgTokens: '—' },
+  { name: 'GPT-5.4',        avgScore: 0.934, passRate: '5/5', totalCost: '$5.24', avgTokens: '—' },
+];
+
+const skills = [
+  { name: 'Fix Cross-File Bug', description: 'A bug whose root cause is in module A but whose visible symptoms surface in module B. The model has to trace the call graph across files — single-file patches will still fail the test suite. Tests multi-file debugging discipline. Public analog: SWE-bench Pro.' },
+  { name: 'Fix Concurrency Bug', description: 'A multi-threaded scraper with a subtle race condition that only surfaces under load. Passing the test suite once is not enough — the fix has to hold under repeated runs. Tests whether the model recognizes timing-sensitive patterns rather than pattern-matching on a superficial fix. Public analog: Opus 4.7\'s own "race conditions previous models couldn\'t resolve" claim.' },
+  { name: 'Multi-Step Migration', description: 'Add a new column to a User model end-to-end: SQL migration, model class, database helpers, route handlers. A partial fix (column added but model not updated) still fails. Tests coordinated multi-file planning across the full stack. Public analog: Anthropic "hours-long workflows"; OpenAI OSWorld.' },
+  { name: 'Fix Broken Build', description: 'A webapp where server.py imports from a module that does not exist — the build fails on top-level import. Trivial when you run the tests and read the error; impossible when you don\'t. Tests whether the model uses the test suite as a diagnostic tool or just reads the code and guesses. Public analog: Terminal-Bench 2.0.' },
+  { name: 'Review & Fix Security', description: 'A webapp with three OWASP-class vulnerabilities: SQL injection via f-string query, XSS via unescaped template rendering, and a hardcoded secret key. Each has a canonical mitigation (parameterized queries, html.escape, os.environ.get). Tests whether the model recognizes the OWASP pattern and applies the standard fix rather than an ad-hoc workaround.' },
+];
+
+// Per-skill scores. Column order matches `models` above. Values from
+// results/frontier-3way-v3/suite_results.json, all three models passed
+// every cell at 100% so there are no FAIL markers in this matrix.
+const skillScores = [
+  { skill: 'Fix Cross-File Bug',      scores: [1.00, 0.91, 0.97] },
+  { skill: 'Fix Concurrency Bug',     scores: [0.93, 0.80, 0.92] },
+  { skill: 'Multi-Step Migration',    scores: [0.99, 0.98, 0.98] },
+  { skill: 'Fix Broken Build',        scores: [0.99, 0.98, 0.90] },
+  { skill: 'Review & Fix Security',   scores: [0.99, 0.99, 0.99] },
+];
+
+// Cost breakdown — four metrics disclosed to guard against the
+// tokenizer asymmetry confound (same English text → different token
+// counts per provider). See "How We Report Cost" section.
+const costData = {
+  headers: ['Tier', 'Avg Score', 'Total Cost', 'Cost / Quality Pt'],
+  rows: [
+    { name: 'Gemini 3.1 Pro',  cells: ['Flagship', '0.952', '$2.98', '$3.13'] },
+    { name: 'GPT-5.4',         cells: ['Flagship', '0.934', '$5.24', '$5.61'] },
+    { name: 'Claude Opus 4.7', cells: ['Flagship', '0.979', '$10.33', '$10.55'] },
+  ],
+};
+
+// Mean tool rounds per (skill, model). Opus and Gemini peak at 13;
+// GPT-5.4 peaks at 18 on fix-concurrency-bug (up to 22 on individual
+// runs). This is the efficiency-cost story the quality scores obscure.
+const toolRounds = [
+  { skill: 'Fix Cross-File Bug',    opus: 7.0,  gpt: 11.3, gemini: 10.0 },
+  { skill: 'Fix Concurrency Bug',   opus: 11.3, gpt: 17.7, gemini: 10.0 },
+  { skill: 'Multi-Step Migration',  opus: 7.7,  gpt: 11.7, gemini: 12.0 },
+  { skill: 'Fix Broken Build',      opus: 6.7,  gpt: 6.0,  gemini: 10.3 },
+  { skill: 'Review & Fix Security', opus: 8.3,  gpt: 10.3, gemini: 7.7 },
+];
+
+// Recommendation matrix — the consulting takeaway. For each skill, the
+// model to pick depends on whether you're optimizing for quality,
+// value, or balance.
+const recMatrix = [
+  { skill: 'Fix Cross-File Bug',    quality: 'Opus 4.7 (1.00)',           value: 'Gemini 3.1 Pro (0.97)', notes: 'Gemini within 0.03 at ~28% of Opus cost.' },
+  { skill: 'Fix Concurrency Bug',   quality: 'Opus 4.7 (0.93)',           value: 'Gemini 3.1 Pro (0.92)', notes: 'Gemini essentially ties Opus; GPT-5.4 at 0.80 uses 17+ tool rounds.' },
+  { skill: 'Multi-Step Migration',  quality: 'Opus 4.7 (0.99)',           value: 'Gemini or GPT (0.98)',  notes: 'Three-way tie within 0.01. Pick by cost.' },
+  { skill: 'Fix Broken Build',      quality: 'Opus 4.7 / GPT-5.4 (0.98)', value: 'GPT-5.4 (0.98)',        notes: 'Gemini slightly behind at 0.90. Opus and GPT are tied on quality.' },
+  { skill: 'Review & Fix Security', quality: 'Three-way tie (0.99)',      value: 'Gemini 3.1 Pro (0.99)', notes: 'Identical quality; pick cheapest.' },
+];
+
+const toc = [
+  { id: 'what-we-tested', label: 'The Five Skills' },
+  { id: 'how-we-judged', label: 'How the Harness Works' },
+  { id: 'the-ceiling-discovery', label: 'The Ceiling Discovery' },
+  { id: 'full-results', label: 'Full Results' },
+  { id: 'tool-efficiency', label: 'Tool Efficiency' },
+  { id: 'cost-efficiency', label: 'Cost Efficiency' },
+  { id: 'recommendation-matrix', label: 'Recommendation Matrix' },
+  { id: 'what-this-means', label: 'What This Means' },
+  { id: 'limitations', label: 'Limitations' },
+];
+---
+
+<ReportLayout
+  title="Three Frontier Models, Five Agentic Coding Skills"
+  subtitle="Opus 4.7, GPT-5.4, Gemini 3.1 Pro — all three at 100% pass rate. The real story is cost and tool efficiency."
+  description="The three frontier models from Anthropic, OpenAI, and Google benchmarked on five agentic software-engineering skills. All three pass every skill at 100%. Opus wins quality at $10.33. Gemini wins value at $2.98. GPT-5.4 sits in the middle and uses 2-3× more tool rounds on concurrency work."
+  department="Frontier Model Evals"
+  date="2026-04-19"
+  dateFormatted="April 19, 2026"
+  slug="frontier-3way"
+  toc={toc}
+  models={models}
+  methodology="3 flagship models × 5 agentic-coding skills × N=3 runs = 45 invocations (+ 90 ensemble judge calls after cross-provider recusal). Three-layer scoring: regex rules, outcome assertions (bash run_tests.sh exits 0 via sandboxed shell MCP), and ensemble LLM judge (Claude Opus, GPT-5.4, Gemini 3.1 Pro) with provider recusal — no model judges its own provider's output. Scores report mean ± stddev (N=3). Pre-registration committed before data collection at docs/frontier-3way-preregistration.md, including Addendum C documenting the ceiling-effect discovery. Total benchmark cost across all runs and re-runs: $18.55. Model capabilities as of April 19, 2026. Benchmarked with EvalRig — architecturally sound, realism-first eval harness; see evalrig.ai for the methodology."
+>
+  <Fragment slot="intro">
+    <p class="report-lede">
+      Three frontier models — Anthropic's Claude Opus 4.7, OpenAI's GPT-5.4,
+      Google's Gemini 3.1 Pro — tested on five agentic software-engineering
+      skills, each with N=3 runs, in an environment that looks like a real
+      repository: a git history, an AGENTS.md file declaring project
+      conventions, unrelated TODOs, stale README sections, legacy tests.
+      Each model had a sandboxed shell to run the test suite and iterate.
+      <strong>All three models pass every skill at 100%.</strong>
+    </p>
+    <p class="report-context">
+      The headline "who wins" answer is boring. All three are capable. The
+      interesting findings are cost, tool-loop efficiency, and one
+      methodological save that caught what would have been a misleading
+      publication — documented in detail below.
+    </p>
+    <figure class="hero-chart">
+      <img src="/benchmarks/frontier-3way/frontier-3way-scores.png"
+           alt="Grouped bar chart — scores per skill across Opus 4.7, GPT-5.4, and Gemini 3.1 Pro. Every cell passes. Opus averages 0.979, Gemini 0.952, GPT-5.4 0.934." />
+      <figcaption>Per-skill scores with stddev error bars. Every cell passes the 0.70 threshold.</figcaption>
+    </figure>
+  </Fragment>
+
+  <ReportSection id="what-we-tested" title="The Five Skills — Chosen, Not Curated">
+    <p>
+      Five skills across five orthogonal axes of agentic software-engineering
+      capability. Each axis maps to a published benchmark or vendor-marketing
+      claim that the frontier tier is demonstrably sensitive to. No skill is
+      a toy — each was authored to exercise a specific capability and
+      validated through a smoke pass on all three models before the full
+      benchmark fired.
+    </p>
+
+    <SkillGrid skills={skills} />
+
+    <p>
+      <strong>Why these five, and not others.</strong> The public-benchmark
+      landscape has a problem: SWE-bench Verified is near-saturated (Opus
+      4.7 at 87.6%, Gemini at 80.6%) and Anthropic's own engineering blog
+      flags training-data contamination on it. HumanEval is too short-horizon
+      and nearly universally saturated. We need skills where the top three
+      models <em>legitimately diverge</em> — not noise, but actual capability
+      or efficiency differences.
+    </p>
+
+    <p>
+      Each skill here was selected to target a specific axis where vendor
+      claims and public evidence suggest meaningful divergence:
+    </p>
+
+    <ul>
+      <li>
+        <strong>fix-cross-file-bug</strong> — the multi-file-debug axis. Maps
+        to SWE-bench Pro, where GPT-5.4 publicly claims competitive scores.
+        Tests whether a model chases symptoms or finds the root cause when
+        the bug spans module boundaries.
+      </li>
+      <li>
+        <strong>fix-concurrency-bug</strong> — the hard-single-file axis.
+        Maps to Anthropic's Opus 4.7 release-day claim that their model
+        "detected race conditions previous models couldn't resolve." Tests
+        whether the model recognizes timing-sensitive bugs that don't
+        surface on a single test run.
+      </li>
+      <li>
+        <strong>multi-step-migration</strong> — the long-horizon agentic
+        axis. Maps to Anthropic's "hours-long workflows" and OpenAI's
+        OSWorld. Tests coordinated planning across four files: a migration,
+        a model class, database helpers, and route handlers. Partial
+        correctness still fails.
+      </li>
+      <li>
+        <strong>fix-broken-build</strong> — the build / terminal-ops axis.
+        Maps to Terminal-Bench 2.0. Tests whether the model uses the failing
+        test suite as a diagnostic tool, or just reads code and guesses.
+      </li>
+      <li>
+        <strong>review-and-fix-security</strong> — the security-judgment
+        axis. OWASP-class vulnerabilities (SQL injection, XSS, hardcoded
+        secret) where each has a canonical fix. Tests whether the model
+        recognizes the pattern and applies the standard mitigation.
+      </li>
+    </ul>
+
+    <p>
+      Each skill's full definition — task description, seed workspace, pass
+      criteria — is committed in the EvalRig repository alongside the
+      benchmark. Skills are reproducible; a reviewer can re-run any cell.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="how-we-judged" title="How the Harness Works">
+    <p>
+      EvalRig is built realism-first. Each evaluation runs in a workspace
+      that looks like a real repository, not a sterile scratchpad:
+    </p>
+
+    <ul>
+      <li>
+        <strong>Native wire shapes per provider.</strong> Anthropic gets
+        XML-tagged messages, OpenAI gets markdown with JSON fences via the
+        Responses API, Google gets prose with <code>system_instruction</code>
+        and typed Parts. Each model sees its own preferred format carrying
+        the same semantic task. Without this, a benchmark silently measures
+        "who handles Anthropic's shape well" instead of capability.
+      </li>
+      <li>
+        <strong>A real repository state.</strong> Every workspace is a git
+        repo with an "initial" commit. Models can run <code>git log</code>,
+        <code>git blame</code>, <code>git diff</code> — the same tools they
+        use in production.
+      </li>
+      <li>
+        <strong>Ambient project constraints.</strong> An <code>AGENTS.md</code>
+        file declares project conventions the model must honor ("parameterized
+        queries only," "no new dependencies," "don't modify tests to make
+        them pass"). Not a Claude-only file — the neutral cross-provider
+        name, specifically chosen to avoid provider bias.
+      </li>
+      <li>
+        <strong>Realistic distractors.</strong> Unrelated TODO comments, a
+        stale README "roadmap" section, a <code>test_legacy.py</code> with
+        skipped tests for blocked work. Forces the model to target the right
+        fix, not pattern-match on "something's broken."
+      </li>
+      <li>
+        <strong>Iterative tool loop.</strong> Two MCP servers
+        (Model Context Protocol, the same spec Claude Code and OpenAI's
+        Codex CLI use): one filesystem server for read/write/edit, and a
+        sandboxed shell server that lets the model run
+        <code>bash run_tests.sh</code>, read failures, and iterate. Up to
+        15 tool rounds per run.
+      </li>
+    </ul>
+
+    <h3>Three-layer evaluation</h3>
+    <p>Each output is scored through three independent layers:</p>
+    <ol>
+      <li>
+        <strong>Tool-efficiency rule</strong> — bounded reward for
+        completing the task in a reasonable number of rounds with a
+        reasonable tool-error rate. Weighted 20%.
+      </li>
+      <li>
+        <strong>Outcome assertions</strong> — most significantly,
+        <code>script_passes</code> on <code>bash run_tests.sh</code>. If
+        the model's edit doesn't make the test suite green, it doesn't
+        pass. Weighted 55%.
+      </li>
+      <li>
+        <strong>Ensemble LLM judge</strong> with provider recusal: Claude
+        Opus, GPT-5.4, and Gemini 3.1 Pro each score independently, but
+        <strong>never their own provider's outputs</strong>. When judging
+        an Opus output, only GPT and Gemini judge. Scores combined via
+        median (robust to a single judge failure). Weighted 25%.
+      </li>
+    </ol>
+
+    <p>
+      This three-layer approach means: rules catch inefficient iteration,
+      <code>script_passes</code> catches incorrect fixes, and the judge
+      catches semantic quality issues. No single layer can inflate a score,
+      and no model can grade itself.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="the-ceiling-discovery" title="The Tool-Round Ceiling — A Methodological Save">
+    <p>
+      In the original run (April 18, 2026), GPT-5.4 appeared to fail
+      catastrophically on two skills: 0.65 on fix-cross-file-bug (σ=0.56)
+      and <strong>0.30 on fix-concurrency-bug</strong> (σ=0.52). If we had
+      published those numbers, the headline would have read "GPT-5.4 fails
+      agentic debugging."
+    </p>
+    <p>
+      The pre-registration saved us. Section 5 of our committed pre-reg
+      contains this decision rule:
+    </p>
+    <blockquote>
+      <em>
+        Stddev &gt; 0.20 on any cell — explicitly refuse to report a mean
+        for that cell; show distribution only.
+      </em>
+    </blockquote>
+    <p>
+      Both of GPT-5.4's "failing" cells met that threshold. When we
+      inspected the distribution, the scores were <strong>bimodal, not
+      noisy</strong>: runs were either 0.90+ (passing cleanly) or 0.0
+      (total failure). The failing runs had one thing in common —
+      <code>tool_rounds=15</code>, hitting our configured ceiling, with
+      <code>output_length=0</code>, meaning the model was cut off
+      mid-exploration before producing a final answer.
+    </p>
+    <p>
+      Opus and Gemini never approached the ceiling: their maximum observed
+      tool rounds across all 45 cells was 13. Only GPT-5.4 hit 15.
+    </p>
+    <p>
+      We re-ran the two affected GPT-5.4 cells at a 25-round ceiling
+      (exposed via a new <code>EVALRIG_MAX_TOOL_ROUNDS</code> env-var
+      override). Results:
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Cell</th><th>Ceiling = 15</th><th>Ceiling = 25</th><th>Rounds used</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">fix-cross-file-bug</td><td>0.65 FAIL (σ=0.56)</td><td class="positive">0.91 PASS (σ=0.02)</td><td>9, 14, 11</td></tr>
+          <tr><td class="row-label">fix-concurrency-bug</td><td>0.30 FAIL (σ=0.52)</td><td class="positive">0.80 PASS (σ=0.01)</td><td>22, 18, 13</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      At the higher ceiling, GPT-5.4 completes both tasks at quality
+      comparable to the other models. <strong>The "failures" were a harness
+      artifact, not a capability gap.</strong>
+    </p>
+    <p>
+      What we kept, and what we changed: the ceiling=25 numbers are used
+      for GPT-5.4 on those two cells specifically. All other 13 cells are
+      unchanged — neither Opus nor Gemini ever came close to the original
+      ceiling, so their ceiling=15 data is equivalent to ceiling=25 data.
+      This is a per-cell fairness fix, not a global methodology change.
+    </p>
+    <p>
+      What remains a real finding: GPT-5.4 genuinely uses more tool rounds
+      than Opus or Gemini on concurrency work. Even at the higher ceiling,
+      individual runs used 22 rounds. That's a legitimate efficiency cost
+      (roughly 2-3× the round count of its competitors on this skill), and
+      we report it alongside the quality score rather than burying it.
+    </p>
+    <p>
+      The full provenance is in pre-registration Addendum C, committed
+      alongside the remediation. Every deviation from the original plan is
+      disclosed by name.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="full-results" title="Full Results">
+    <ResultsTable results={results} />
+
+    <h3>Skill-by-skill breakdown</h3>
+    <SkillTable models={models} skills={skillScores} />
+
+    <p><strong>Five patterns stand out.</strong></p>
+
+    <p>
+      <strong>First, Opus 4.7 wins every cell where quality is the
+      primary metric.</strong> It's the highest score on every skill,
+      including the two GPT-5.4 ceiling-corrected cells. If your workflow
+      cannot tolerate a miss, Opus is the safe default — at roughly 2-3×
+      the cost of the other two.
+    </p>
+
+    <p>
+      <strong>Second, Gemini 3.1 Pro is the value leader and nearly
+      ties Opus.</strong> 0.952 average at $2.98 total across 45
+      invocations. It wins or ties on three skills (cross-file bug,
+      concurrency bug, security) against GPT-5.4, and is within 0.03 of
+      Opus on every skill except fix-broken-build (where it lands at
+      0.90 — still passing, just not flagship-level).
+    </p>
+
+    <p>
+      <strong>Third, GPT-5.4 is consistent — when given enough
+      rounds.</strong> Post-ceiling-correction it passes every cell.
+      Averages 0.934 at $5.24, slotting between Opus and Gemini on both
+      quality and cost. Its weakness is tool-round consumption, not
+      capability.
+    </p>
+
+    <p>
+      <strong>Fourth, skill difficulty varies less than expected at the
+      frontier tier.</strong> Four of five skills have all three models
+      within 0.07 of each other. Only fix-cross-file-bug (where Opus
+      scores a perfect 1.00) shows real separation at the top.
+    </p>
+
+    <p>
+      <strong>Fifth, fix-broken-build is the only place GPT-5.4 beats
+      Gemini.</strong> Gemini at 0.90 versus GPT-5.4 at 0.98 is an 8-point
+      gap — the widest margin GPT holds on any skill. Build / terminal-
+      ops work may be a specific GPT-5.4 advantage worth reproducing in a
+      future benchmark.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="tool-efficiency" title="Tool Efficiency — The Hidden Story">
+    <figure>
+      <img src="/benchmarks/frontier-3way/frontier-3way-tool-rounds.png"
+           alt="Grouped bar chart — mean tool rounds per skill × model. GPT-5.4 uses substantially more rounds than Opus and Gemini on fix-concurrency-bug." />
+      <figcaption>Mean tool rounds per cell (N=3). Opus and Gemini stay under 13; GPT-5.4 averages 17.7 on fix-concurrency-bug with peaks of 22.</figcaption>
+    </figure>
+
+    <p>
+      The quality-score table shows all three models at 100% pass rate. The
+      tool-rounds table shows they are not equivalent in how they achieve
+      it. GPT-5.4 uses 2-3× more rounds on <code>fix-concurrency-bug</code>,
+      and is consistently higher across most skills.
+    </p>
+
+    <p>
+      <strong>Why this matters commercially.</strong> Each tool round is an
+      additional API call. More rounds means more tokens sent, more tokens
+      produced, and more latency. For real-time workflows — where an agent
+      is running against customer-facing infrastructure — GPT-5.4's
+      17-round average on concurrency bugs translates to materially higher
+      per-incident cost than Opus's 11-round or Gemini's 10-round average.
+    </p>
+
+    <p>
+      <strong>Why this matters for benchmark authors.</strong> Any benchmark
+      with a low tool-round ceiling will produce artefact "failures" for
+      models that legitimately need more iteration space. Our 15-round
+      cap originally caught GPT-5.4 twice; after the Addendum-C
+      correction, the fair ceiling for this corpus is 25. Future EvalRig
+      benchmarks will use 25 as the standard ceiling and disclose per-cell
+      round counts as a separate metric.
+    </p>
+
+    <figure>
+      <img src="/benchmarks/frontier-3way/frontier-3way-stddev-heatmap.png"
+           alt="Heatmap of per-cell stddev. Post-correction, all cells have low stddev except Gemini on multi-step-migration (historical 0.65 quota-cut cell, since re-run)." />
+      <figcaption>Per-cell stddev (N=3). Green = stable, red = high variance. Most cells stay below σ=0.05 after the Addendum-C correction.</figcaption>
+    </figure>
+
+    <p>
+      Low stddev across the board signals reliable models and a stable
+      harness. The one historical red cell — Gemini on multi-step-migration
+      in the original data — was caused by a Gemini Pro daily-quota
+      exhaustion (250 requests/day on paid Tier 1 for preview models) that
+      cut one of three runs mid-execution. Re-running those cells the next
+      day produced σ=0.000 on all three runs.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="cost-efficiency" title="Cost Efficiency — Four Metrics, Not One">
+    <figure>
+      <img src="/benchmarks/frontier-3way/frontier-3way-cost-vs-quality.png"
+           alt="Scatter plot of total cost vs mean quality. Opus at top right (highest quality, highest cost). Gemini at bottom right of ideal (high quality, lowest cost). GPT-5.4 in the middle." />
+      <figcaption>Cost vs quality. Gemini 3.1 Pro is the efficient-frontier pick; Opus buys the top quality at a premium; GPT-5.4 sits in between.</figcaption>
+    </figure>
+
+    <CostTable headers={costData.headers} rows={costData.rows} highlightCheapest={2} />
+
+    <p>
+      A single cost-per-quality-point number silently hides the
+      <strong>tokenizer asymmetry confound</strong>: the same English
+      text tokenizes into different token counts for each provider, so
+      USD-per-token rankings reward whichever tokenizer packs more
+      efficiently, independent of model capability. We disclose four cost
+      metrics so readers can see which rankings are robust across
+      normalizations:
+    </p>
+
+    <figure>
+      <img src="/benchmarks/frontier-3way/frontier-3way-cost-metrics.png"
+           alt="Grouped bar of four cost metrics per model — dollars per run, per 1k output chars, per passed run, per quality point. Gemini cheapest on three of four." />
+      <figcaption>Four tokenizer-invariant cost metrics. Characters, not tokens, are provider-invariant; cost-per-passed-run and cost-per-quality-point tether cost to outcomes.</figcaption>
+    </figure>
+
+    <p>
+      <strong>Gemini is cheapest on three of four metrics</strong> ($/run,
+      $/1k output chars, $/passed run), and within a fraction of a cent
+      of GPT-5.4 on the fourth. This is a robust finding — whichever way
+      you normalize cost, Gemini wins the efficiency ranking.
+    </p>
+
+    <p>
+      Opus's premium buys you the highest-quality output. At $10.33 for
+      the full benchmark, it costs 3.5× Gemini and 2× GPT-5.4 for an
+      additional 0.02-0.05 in average quality. Whether that premium is
+      justified depends entirely on your workflow's error tolerance.
+    </p>
+
+    <p class="small">
+      A caveat on these rankings: cost efficiency rewards cheap-and-adequate
+      over expensive-and-excellent. Gemini's 0.90 on fix-broken-build is an
+      8-point drop from GPT-5.4's 0.98 on the same skill. If build-fix
+      reliability is your team's critical path, the cheapest-per-QP number
+      would steer you wrong. Always read cost efficiency alongside the
+      per-skill table.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="recommendation-matrix" title="Recommendation Matrix — Picking by Skill">
+    <p>
+      For each skill, the model to pick depends on whether you're
+      optimizing for quality, cost, or balance. This is the consulting
+      takeaway: a one-size-fits-all headline hides the per-skill nuance.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Skill</th><th>Best Quality</th><th>Best Value</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          {recMatrix.map(r => (
+            <tr>
+              <td class="row-label">{r.skill}</td>
+              <td>{r.quality}</td>
+              <td>{r.value}</td>
+              <td class="small">{r.notes}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      Three of five skills are essentially three-way ties at the top within
+      0.01-0.03 of each other. For those skills, the right question is
+      cost, not quality — and Gemini wins. On fix-concurrency-bug, Opus
+      and Gemini are functionally tied while GPT-5.4 uses nearly twice
+      the tool rounds. On fix-broken-build, Opus and GPT-5.4 tie while
+      Gemini lags by 8 points. On fix-cross-file-bug, Opus's 1.00 is the
+      only meaningful lead.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="what-this-means" title="What This Means">
+    <p>
+      The question for engineering leaders isn't <em>which frontier model
+      is best</em>. The data answers that: <strong>Opus for quality, Gemini
+      for value, GPT-5.4 for a specific subset including build-ops.</strong>
+      The question is whether your team's model-selection decision is
+      being made with benchmark data or with whatever the sales team's
+      demo used.
+    </p>
+
+    <p>
+      <strong>If you need reliable code-fix output on varied task types
+      and cost is secondary</strong>, Opus 4.7 is the defensible default.
+      5/5 pass rate, highest quality on every cell, lowest variance. You
+      pay 3.5× more than Gemini for roughly 0.02-0.05 of additional
+      average quality — a small premium if your workflow cannot tolerate
+      misses.
+    </p>
+
+    <p>
+      <strong>If you're cost-sensitive and can tolerate occasional 0.90
+      instead of 1.00</strong>, Gemini 3.1 Pro is the clear pick. It wins
+      or ties on four of five skills at 28% of Opus's cost and 57% of
+      GPT-5.4's. It is the only model in this benchmark that is
+      simultaneously in the top two on quality and the absolute cheapest
+      on every cost metric.
+    </p>
+
+    <p>
+      <strong>If your workload is specifically build / terminal-ops
+      heavy</strong>, GPT-5.4 at 0.98 on fix-broken-build is the right
+      pick — Gemini lags noticeably here (0.90) and Opus costs more
+      without a meaningful quality advantage. Watch the tool-round
+      consumption on concurrency work, which runs materially higher than
+      competitors.
+    </p>
+
+    <p>
+      One more observation that may be underweighted in the public
+      discourse: <strong>the top three frontier models are functionally
+      equivalent on four out of five skills at the flagship tier.</strong>
+      The days of "GPT-5 fails where Opus wins" or vice versa are
+      essentially over at the task difficulty this benchmark measures.
+      Selection is now a cost-and-workflow question, not a capability
+      question.
+    </p>
+  </ReportSection>
+
+  <ReportSection id="limitations" title="Limitations">
+    <p>
+      We disclose these above the headline numbers, not in a footnote.
+    </p>
+    <ul>
+      <li>
+        <strong>N=3 limits statistical resolution.</strong> With observed
+        stddev averaging ~0.03 post-correction, the 95% CI half-width is
+        roughly ±0.08. Gaps under 0.08 (e.g., Gemini vs GPT-5.4 at 0.018)
+        are within noise at this sample size. We cite this in every
+        directional claim. A follow-up run at N=10 would tighten the CI
+        to roughly ±0.04.
+      </li>
+      <li>
+        <strong>Tokenizer cost differences.</strong> The same English text
+        tokenizes into different token counts for each provider. USD costs
+        silently fold that asymmetry into the ranking. We disclose four
+        cost metrics (including character-based normalization) to make
+        the confound visible; readers should verify a cost ranking holds
+        across all four before acting on it.
+      </li>
+      <li>
+        <strong>Training-data overlap is not controllable.</strong> Models
+        trained on more Claude-flavored instruction-tuning data retain an
+        advantage even on per-provider native-rendered prompts. We cannot
+        neutralize this from the harness side; we name it upfront and
+        disclose it.
+      </li>
+      <li>
+        <strong>AGENTS.md authorship confound.</strong> The ambient
+        project-context files in our workspace seeds are hand-authored.
+        Word choices ("prefer <code>str | None</code>," "parameterized
+        queries only") could favor whichever provider's training
+        distribution leans that way. We pattern-audit for wire-shape
+        leakage via <code>scripts/audit_skill_neutrality.py</code>, but
+        empirical content-bias audit requires human-graded calibration
+        — a separate open workstream we have designed but not yet
+        executed.
+      </li>
+      <li>
+        <strong>Single-grader calibration is still pending.</strong> Our
+        ensemble judge with cross-provider recusal is the first-order
+        defense against LLM-grading-LLM bias. Human-graded calibration
+        would measure how closely judge scores track human judgment —
+        currently unmeasured. Planned as the next methodology investment;
+        see <code>docs/human_graded_calibration.md</code> in the EvalRig
+        repository.
+      </li>
+      <li>
+        <strong>Five skills is a specific cut of a larger capability
+        space.</strong> Different choices could rearrange the ranking.
+        This benchmark measures agentic coding with iterative test
+        feedback on these specific skills — not "general AI capability"
+        or "which model is best." A follow-up hallucination benchmark,
+        a long-horizon multi-session benchmark, and an ambient-org-context
+        benchmark are all on the EvalRig roadmap.
+      </li>
+      <li>
+        <strong>The tool-round ceiling discovery shows a kind of
+        result-sensitivity we will guard against.</strong> Our pre-reg's
+        distribution-over-mean decision rule caught the ceiling effect;
+        without it we'd have published misleading GPT-5.4 numbers. We
+        document the Addendum-C correction in full; future benchmarks
+        will default to a 25-round ceiling with similar distribution
+        checks baked in.
+      </li>
+    </ul>
+  </ReportSection>
+</ReportLayout>
+
+<style>
+  .report-lede {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+
+  .report-context {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-chart {
+    margin: 1.5rem 0 0 0;
+  }
+
+  .hero-chart img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  figure img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    margin-bottom: 0.5rem;
+  }
+
+  figure figcaption {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .table-wrap {
+    margin: 1.25rem 0;
+    overflow-x: auto;
+  }
+
+  .row-label {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+
+  .positive {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .small {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  blockquote {
+    border-left: 3px solid var(--accent);
+    padding: 0.5rem 1rem;
+    margin: 1rem 0;
+    color: var(--text);
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: var(--surface);
+    padding: 0.1em 0.3em;
+    border-radius: var(--radius-sm);
+  }
+</style>

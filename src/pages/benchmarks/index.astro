@@ -14,6 +14,20 @@ import BenchmarkCard from '../../components/BenchmarkCard.astro';
 
   <div class="benchmarks-list">
     <BenchmarkCard
+      slug="frontier-3way"
+      title="Three Frontier Models, Five Agentic Coding Skills"
+      date="2026-04-19"
+      department="Frontier Model Evals"
+      models={3}
+      skills={5}
+      runs={45}
+      bestValue="Gemini 3.1 Pro"
+      bestValueScore="0.952 avg, $2.98"
+      bestOverall="Claude Opus 4.7"
+      bestOverallScore="0.979 avg"
+      headline="Opus 4.7, GPT-5.4, and Gemini 3.1 Pro benchmarked on real agentic coding tasks with iterative test execution. All three pass every skill at 100%. The real story is cost and tool efficiency."
+    />
+    <BenchmarkCard
       slug="cs-department"
       title="Customer Success Doesn't Need Opus"
       date="2026-03-16"
@@ -26,20 +40,6 @@ import BenchmarkCard from '../../components/BenchmarkCard.astro';
       bestOverall="Gemini 3.1 Pro"
       bestOverallScore="0.852 avg"
       headline="Nine models across three tiers on ticket triage, complaint response, knowledge base generation, and churn analysis. The most expensive model scored the lowest."
-    />
-    <BenchmarkCard
-      slug="frontier-showdown"
-      title="Frontier Model Showdown"
-      date="2026-03-08"
-      department="Frontier Model Evals"
-      models={3}
-      skills={4}
-      runs={12}
-      bestValue="Gemini 3.1 Pro"
-      bestValueScore="0.768 avg, $0.31 cost"
-      bestOverall="Claude Opus 4.6"
-      bestOverallScore="0.825 avg"
-      headline="Three frontier models tested on frontend design, MCP server builder, skill creator, and Excel generation. Claude scored highest. Gemini was cheapest."
     />
   </div>
 
