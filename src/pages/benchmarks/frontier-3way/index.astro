@@ -54,26 +54,27 @@ const costData = {
   ],
 };
 
-// Mean tool rounds per (skill, model). Opus and Gemini peak at 13;
-// GPT-5.4 peaks at 18 on fix-concurrency-bug (up to 22 on individual
-// runs). This is the efficiency-cost story the quality scores obscure.
+// Mean tool rounds per (skill, model). Computed from
+// results/frontier-3way-v3/suite_results.json post-merge. GPT-5.4
+// averages 17.7 on fix-concurrency-bug (1.6-1.7× the other two);
+// Opus and Gemini stay below 13 mean on every cell.
 const toolRounds = [
-  { skill: 'Fix Cross-File Bug',    opus: 7.0,  gpt: 11.3, gemini: 10.0 },
-  { skill: 'Fix Concurrency Bug',   opus: 11.3, gpt: 17.7, gemini: 10.0 },
-  { skill: 'Multi-Step Migration',  opus: 7.7,  gpt: 11.7, gemini: 12.0 },
-  { skill: 'Fix Broken Build',      opus: 6.7,  gpt: 6.0,  gemini: 10.3 },
-  { skill: 'Review & Fix Security', opus: 8.3,  gpt: 10.3, gemini: 7.7 },
+  { skill: 'Fix Cross-File Bug',    opus: 7.0,  gpt: 11.3, gemini: 10.7 },
+  { skill: 'Fix Concurrency Bug',   opus: 10.7, gpt: 17.7, gemini: 10.3 },
+  { skill: 'Multi-Step Migration',  opus: 9.0,  gpt: 10.3, gemini: 12.7 },
+  { skill: 'Fix Broken Build',      opus: 7.7,  gpt: 7.0,  gemini: 11.0 },
+  { skill: 'Review & Fix Security', opus: 8.7,  gpt: 10.3, gemini: 8.0 },
 ];
 
 // Recommendation matrix — the consulting takeaway. For each skill, the
 // model to pick depends on whether you're optimizing for quality,
 // value, or balance.
 const recMatrix = [
-  { skill: 'Fix Cross-File Bug',    quality: 'Opus 4.7 (1.00)',           value: 'Gemini 3.1 Pro (0.97)', notes: 'Gemini within 0.03 at ~28% of Opus cost.' },
-  { skill: 'Fix Concurrency Bug',   quality: 'Opus 4.7 (0.93)',           value: 'Gemini 3.1 Pro (0.92)', notes: 'Gemini essentially ties Opus; GPT-5.4 at 0.80 uses 17+ tool rounds.' },
-  { skill: 'Multi-Step Migration',  quality: 'Opus 4.7 (0.99)',           value: 'Gemini or GPT (0.98)',  notes: 'Three-way tie within 0.01. Pick by cost.' },
-  { skill: 'Fix Broken Build',      quality: 'Opus 4.7 / GPT-5.4 (0.98)', value: 'GPT-5.4 (0.98)',        notes: 'Gemini slightly behind at 0.90. Opus and GPT are tied on quality.' },
-  { skill: 'Review & Fix Security', quality: 'Three-way tie (0.99)',      value: 'Gemini 3.1 Pro (0.99)', notes: 'Identical quality; pick cheapest.' },
+  { skill: 'Fix Cross-File Bug',    quality: 'Opus 4.7 (1.00)',     value: 'Gemini 3.1 Pro (0.97)', notes: 'Gemini within 0.03 at ~29% of Opus cost.' },
+  { skill: 'Fix Concurrency Bug',   quality: 'Opus 4.7 (0.93)',     value: 'Gemini 3.1 Pro (0.92)', notes: 'Gemini essentially ties Opus; GPT-5.4 at 0.80 uses 1.7× more tool rounds.' },
+  { skill: 'Multi-Step Migration',  quality: 'Opus 4.7 (0.99)',     value: 'Gemini or GPT (0.98)',  notes: 'Three-way within 0.02. Pick by cost.' },
+  { skill: 'Fix Broken Build',      quality: 'Opus 4.7 (0.99)',     value: 'GPT-5.4 (0.98)',        notes: 'Opus narrowly leads GPT (0.99 vs 0.98). Gemini lags at 0.90.' },
+  { skill: 'Review & Fix Security', quality: 'Three-way tie (0.99)', value: 'Gemini 3.1 Pro (0.99)', notes: 'Identical at 2-dp; pick cheapest.' },
 ];
 
 const toc = [
@@ -92,7 +93,7 @@ const toc = [
 <ReportLayout
   title="Three Frontier Models, Five Agentic Coding Skills"
   subtitle="Opus 4.7, GPT-5.4, Gemini 3.1 Pro — all three at 100% pass rate. The real story is cost and tool efficiency."
-  description="The three frontier models from Anthropic, OpenAI, and Google benchmarked on five agentic software-engineering skills. All three pass every skill at 100%. Opus wins quality at $10.33. Gemini wins value at $2.98. GPT-5.4 sits in the middle and uses 2-3× more tool rounds on concurrency work."
+  description="The three frontier models from Anthropic, OpenAI, and Google benchmarked on five agentic software-engineering skills. All three pass every skill at 100%. Opus wins quality at $10.33. Gemini wins value at $2.98. GPT-5.4 sits middle on cost, third on quality, and uses roughly 1.5-2× more tool rounds on concurrency work."
   department="Frontier Model Evals"
   date="2026-04-19"
   dateFormatted="April 19, 2026"
@@ -329,9 +330,10 @@ const toc = [
     <p>
       What remains a real finding: GPT-5.4 genuinely uses more tool rounds
       than Opus or Gemini on concurrency work. Even at the higher ceiling,
-      individual runs used 22 rounds. That's a legitimate efficiency cost
-      (roughly 2-3× the round count of its competitors on this skill), and
-      we report it alongside the quality score rather than burying it.
+      individual runs used up to 22 rounds. That's a legitimate efficiency
+      cost — mean of 17.7 rounds versus 10.7 for Opus and 10.3 for Gemini,
+      roughly 1.65-1.72× their round count on this skill — and we report
+      it alongside the quality score rather than burying it.
     </p>
     <p>
       The full provenance is in pre-registration Addendum C, committed
@@ -349,43 +351,47 @@ const toc = [
     <p><strong>Five patterns stand out.</strong></p>
 
     <p>
-      <strong>First, Opus 4.7 wins every cell where quality is the
-      primary metric.</strong> It's the highest score on every skill,
-      including the two GPT-5.4 ceiling-corrected cells. If your workflow
-      cannot tolerate a miss, Opus is the safe default — at roughly 2-3×
-      the cost of the other two.
+      <strong>First, Opus 4.7 is the top-scoring model on four of five
+      skills.</strong> The fifth (review-and-fix-security) is a 2-dp tie:
+      at 3-decimal precision, GPT-5.4 edges Opus 0.994 vs 0.992 — a
+      0.002 gap well inside noise. If your workflow cannot tolerate a
+      miss, Opus is the safe default, at roughly 2× GPT-5.4's cost and
+      3.5× Gemini's.
     </p>
 
     <p>
-      <strong>Second, Gemini 3.1 Pro is the value leader and nearly
-      ties Opus.</strong> 0.952 average at $2.98 total across 45
-      invocations. It wins or ties on three skills (cross-file bug,
-      concurrency bug, security) against GPT-5.4, and is within 0.03 of
-      Opus on every skill except fix-broken-build (where it lands at
-      0.90 — still passing, just not flagship-level).
+      <strong>Second, Gemini 3.1 Pro is the value leader and stays close
+      to Opus.</strong> 0.952 average at $2.98 total across 45
+      invocations. Against GPT-5.4, Gemini wins two skills (cross-file
+      bug, concurrency bug) and essentially ties two more (migration
+      and security, within 0.005). Against Opus, Gemini is within 0.03
+      on every skill except fix-broken-build (where it lands at 0.90 —
+      still passing, just not flagship-level).
     </p>
 
     <p>
-      <strong>Third, GPT-5.4 is consistent — when given enough
+      <strong>Third, GPT-5.4 is consistent once given enough
       rounds.</strong> Post-ceiling-correction it passes every cell.
-      Averages 0.934 at $5.24, slotting between Opus and Gemini on both
-      quality and cost. Its weakness is tool-round consumption, not
-      capability.
+      Averages 0.934 at $5.24, middle on cost but slightly behind
+      Gemini on quality (Opus 0.979 &gt; Gemini 0.952 &gt; GPT 0.934).
+      Its weakness is tool-round consumption, not capability.
     </p>
 
     <p>
       <strong>Fourth, skill difficulty varies less than expected at the
       frontier tier.</strong> Four of five skills have all three models
-      within 0.07 of each other. Only fix-cross-file-bug (where Opus
-      scores a perfect 1.00) shows real separation at the top.
+      within 0.10 of each other (ranges: 0.08, 0.02, 0.09, 0.01
+      respectively). Only fix-concurrency-bug (range 0.13, driven by
+      GPT-5.4 at 0.80 vs Opus/Gemini at 0.92-0.93) shows a spread above
+      0.10.
     </p>
 
     <p>
-      <strong>Fifth, fix-broken-build is the only place GPT-5.4 beats
-      Gemini.</strong> Gemini at 0.90 versus GPT-5.4 at 0.98 is an 8-point
-      gap — the widest margin GPT holds on any skill. Build / terminal-
-      ops work may be a specific GPT-5.4 advantage worth reproducing in a
-      future benchmark.
+      <strong>Fifth, fix-broken-build is the only skill where GPT-5.4
+      decisively beats Gemini.</strong> GPT-5.4 at 0.98 versus Gemini
+      at 0.90 is a 0.085 gap — the widest margin GPT holds over Gemini
+      on any skill. Build / terminal-ops work may be a specific GPT-5.4
+      advantage worth reproducing in a future benchmark.
     </p>
   </ReportSection>
 
@@ -399,8 +405,9 @@ const toc = [
     <p>
       The quality-score table shows all three models at 100% pass rate. The
       tool-rounds table shows they are not equivalent in how they achieve
-      it. GPT-5.4 uses 2-3× more rounds on <code>fix-concurrency-bug</code>,
-      and is consistently higher across most skills.
+      it. GPT-5.4 uses roughly 1.65-1.72× more rounds on
+      <code>fix-concurrency-bug</code> (17.7 mean vs 10.7 for Opus and 10.3
+      for Gemini), with individual runs peaking at 22.
     </p>
 
     <p>
@@ -408,8 +415,8 @@ const toc = [
       additional API call. More rounds means more tokens sent, more tokens
       produced, and more latency. For real-time workflows — where an agent
       is running against customer-facing infrastructure — GPT-5.4's
-      17-round average on concurrency bugs translates to materially higher
-      per-incident cost than Opus's 11-round or Gemini's 10-round average.
+      17.7-round mean on concurrency bugs translates to materially higher
+      per-incident cost than Opus's 10.7-round or Gemini's 10.3-round mean.
     </p>
 
     <p>
@@ -424,25 +431,27 @@ const toc = [
 
     <figure>
       <img src="/benchmarks/frontier-3way/frontier-3way-stddev-heatmap.png"
-           alt="Heatmap of per-cell stddev. Post-correction, all cells have low stddev except Gemini on multi-step-migration (historical 0.65 quota-cut cell, since re-run)." />
-      <figcaption>Per-cell stddev (N=3). Green = stable, red = high variance. Most cells stay below σ=0.05 after the Addendum-C correction.</figcaption>
+           alt="Heatmap of per-cell stddev. Post-correction, 14 of 15 cells are below σ=0.05; the exception is Opus on fix-concurrency-bug at σ=0.052." />
+      <figcaption>Per-cell stddev (N=3). Green = stable, red = high variance. 14 of 15 cells stay below σ=0.05 after the Addendum-C correction.</figcaption>
     </figure>
 
     <p>
       Low stddev across the board signals reliable models and a stable
-      harness. The one historical red cell — Gemini on multi-step-migration
-      in the original data — was caused by a Gemini Pro daily-quota
-      exhaustion (250 requests/day on paid Tier 1 for preview models) that
-      cut one of three runs mid-execution. Re-running those cells the next
-      day produced σ=0.000 on all three runs.
+      harness. The one cell just above 0.05 is Opus on
+      fix-concurrency-bug at σ=0.052 — a narrow band where Opus landed
+      runs at 0.87, 0.94, and 0.97, still all well above the pass
+      threshold. Historical outliers from the original run (Gemini
+      quota-exhausted cells, GPT-5.4 ceiling-hit cells) have been
+      replaced by the surgical re-run data, so the heatmap reflects
+      clean N=3 stddev on every cell.
     </p>
   </ReportSection>
 
   <ReportSection id="cost-efficiency" title="Cost Efficiency — Four Metrics, Not One">
     <figure>
       <img src="/benchmarks/frontier-3way/frontier-3way-cost-vs-quality.png"
-           alt="Scatter plot of total cost vs mean quality. Opus at top right (highest quality, highest cost). Gemini at bottom right of ideal (high quality, lowest cost). GPT-5.4 in the middle." />
-      <figcaption>Cost vs quality. Gemini 3.1 Pro is the efficient-frontier pick; Opus buys the top quality at a premium; GPT-5.4 sits in between.</figcaption>
+           alt="Scatter plot of total cost vs mean quality. Opus at top right (0.979 quality, $10.33). Gemini at lower-left of ideal (0.952 quality, $2.98). GPT-5.4 at lower quality and middle cost (0.934, $5.24)." />
+      <figcaption>Cost vs quality. Gemini 3.1 Pro is the efficient-frontier pick; Opus buys the top quality at a premium; GPT-5.4 is middle on cost and third on quality.</figcaption>
     </figure>
 
     <CostTable headers={costData.headers} rows={costData.rows} highlightCheapest={2} />
@@ -459,22 +468,26 @@ const toc = [
 
     <figure>
       <img src="/benchmarks/frontier-3way/frontier-3way-cost-metrics.png"
-           alt="Grouped bar of four cost metrics per model — dollars per run, per 1k output chars, per passed run, per quality point. Gemini cheapest on three of four." />
+           alt="Grouped bar of four cost metrics per model — dollars per run, per 1k output chars, per passed run, per quality point. Gemini cheapest on all four." />
       <figcaption>Four tokenizer-invariant cost metrics. Characters, not tokens, are provider-invariant; cost-per-passed-run and cost-per-quality-point tether cost to outcomes.</figcaption>
     </figure>
 
     <p>
-      <strong>Gemini is cheapest on three of four metrics</strong> ($/run,
-      $/1k output chars, $/passed run), and within a fraction of a cent
-      of GPT-5.4 on the fourth. This is a robust finding — whichever way
-      you normalize cost, Gemini wins the efficiency ranking.
+      <strong>Gemini is cheapest on all four metrics</strong> ($/run
+      $0.20, $/1k output chars $0.17, $/passed run $0.20, $/quality pt
+      $3.13). This is a robust finding — whichever way you normalize
+      cost, Gemini wins the efficiency ranking. On $/1k output chars
+      specifically, Opus ($0.40) is actually cheaper than GPT-5.4
+      ($0.42) — a reminder that per-character economics can flip the
+      per-token ranking.
     </p>
 
     <p>
       Opus's premium buys you the highest-quality output. At $10.33 for
       the full benchmark, it costs 3.5× Gemini and 2× GPT-5.4 for an
-      additional 0.02-0.05 in average quality. Whether that premium is
-      justified depends entirely on your workflow's error tolerance.
+      additional 0.03-0.05 in average quality (0.027 over Gemini, 0.045
+      over GPT-5.4). Whether that premium is justified depends entirely
+      on your workflow's error tolerance.
     </p>
 
     <p class="small">
@@ -513,13 +526,14 @@ const toc = [
     </div>
 
     <p>
-      Three of five skills are essentially three-way ties at the top within
-      0.01-0.03 of each other. For those skills, the right question is
-      cost, not quality — and Gemini wins. On fix-concurrency-bug, Opus
-      and Gemini are functionally tied while GPT-5.4 uses nearly twice
-      the tool rounds. On fix-broken-build, Opus and GPT-5.4 tie while
-      Gemini lags by 8 points. On fix-cross-file-bug, Opus's 1.00 is the
-      only meaningful lead.
+      Two of five skills are essentially three-way ties at the top
+      (multi-step-migration within 0.02, review-and-fix-security within
+      0.005). For those skills, the right question is cost, not quality —
+      and Gemini wins. On fix-concurrency-bug, Opus and Gemini are
+      functionally tied (0.926 vs 0.921) while GPT-5.4 uses roughly 1.7×
+      the tool rounds. On fix-broken-build, Opus narrowly leads GPT-5.4
+      (0.99 vs 0.98) while Gemini lags by 0.085. On fix-cross-file-bug,
+      Opus's 1.00 is the only meaningful lead.
     </p>
   </ReportSection>
 
@@ -544,11 +558,11 @@ const toc = [
 
     <p>
       <strong>If you're cost-sensitive and can tolerate occasional 0.90
-      instead of 1.00</strong>, Gemini 3.1 Pro is the clear pick. It wins
-      or ties on four of five skills at 28% of Opus's cost and 57% of
-      GPT-5.4's. It is the only model in this benchmark that is
-      simultaneously in the top two on quality and the absolute cheapest
-      on every cost metric.
+      instead of 1.00</strong>, Gemini 3.1 Pro is the clear pick. Against
+      GPT-5.4, Gemini wins or essentially ties on four of five skills.
+      At 29% of Opus's cost and 57% of GPT-5.4's, Gemini is the only
+      model in this benchmark that is simultaneously in the top two on
+      quality and the absolute cheapest on every cost metric.
     </p>
 
     <p>
@@ -577,12 +591,13 @@ const toc = [
     </p>
     <ul>
       <li>
-        <strong>N=3 limits statistical resolution.</strong> With observed
-        stddev averaging ~0.03 post-correction, the 95% CI half-width is
-        roughly ±0.08. Gaps under 0.08 (e.g., Gemini vs GPT-5.4 at 0.018)
-        are within noise at this sample size. We cite this in every
-        directional claim. A follow-up run at N=10 would tighten the CI
-        to roughly ±0.04.
+        <strong>N=3 limits statistical resolution.</strong> Per-cell
+        stddev averages ~0.015 post-correction (max 0.052 on Opus ×
+        fix-concurrency-bug), giving a 95% CI half-width of roughly
+        ±0.04 per cell. Gaps under 0.04 on mean scores (e.g., Gemini
+        0.952 vs GPT-5.4 0.934 at 0.018) are within noise at N=3. A
+        follow-up run at N=10 would tighten the CI to roughly ±0.02.
+        We cite this in every directional claim.
       </li>
       <li>
         <strong>Tokenizer cost differences.</strong> The same English text
